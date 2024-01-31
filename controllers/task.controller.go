@@ -11,7 +11,6 @@ type TaskController struct {
 
 func NewTaskController(dbConnection *gorm.DB) *TaskController {
 	return &TaskController{DB: dbConnection}
-
 }
 
 func (t *TaskController) GetAllTasks(ctx *gin.Context) {

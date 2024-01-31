@@ -1,8 +1,9 @@
 package controllers
 
 import (
-	"errors"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/darkxxdevs/task-manager-api-go/models"
 	"github.com/gin-gonic/gin"
@@ -18,41 +19,47 @@ func NewUserController(DBconnection *gorm.DB) *UserController {
 }
 
 func (u *UserController) RegisterUser(ctx *gin.Context) {
+	username := ctx.PostForm("username")
+	email := ctx.PostForm("email")
+	password := ctx.PostForm("password")
 
-	var userInput models.User
+	log.Println("credentials recieved:", email, password, username)
 
-	if err := ctx.ShouldBindJSON(&userInput); err != nil {
+	if strings.Trim(username, "") == "" || strings.Trim(email, "") == "" || strings.Trim(password, "") == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body!",
+			"error": "credentials cannot be empty!",
 		})
 		return
 	}
 
-	if err := userInput.Validate(); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
+	log.Println("Creating user instance ...")
 
 	newUser := models.User{
-		Username: userInput.Username,
-		Password: userInput.Password,
-		Email:    userInput.Email,
+		Username: username,
+		Email:    email,
+		Password: password,
 	}
 
-	result := u.DB.Create(&newUser)
+	log.Println("Created user instance ...")
 
-	if result.Error != nil {
+	log.Printf("New User: %+v", newUser)
+
+	result := u.DB
+
+	log.Printf("db config:: %+v", result)
+
+	if err := result.Error; err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create a new user!",
+			"error":   err.Error(),
+			"message": "Internal server error occured...",
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"message": "User created successfully",
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Account created successfully!",
 	})
+
 }
 
 func (u *UserController) LoginUser(ctx *gin.Context) {
@@ -61,7 +68,7 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 		Password string `json:"password" binding:"required"`
 	}
 
-	if err := ctx.ShouldBindJSON(&loginInput); err != nil {
+	if err := ctx.ShouldBind(&loginInput); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})

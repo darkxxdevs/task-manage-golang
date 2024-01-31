@@ -11,7 +11,7 @@ import (
 type User struct {
 	gorm.Model
 	Username string `json:"username"   gorm:"uniqueIndex;not null"`
-	Password string `json:"password" gorm:"not null"`
+	Password string `json:"password"  gorm:"not null"`
 	Email    string `json:"email" gorm:"unique;not null"`
 }
 
@@ -29,6 +29,8 @@ func (u *User) ComparePassword(plainpassword string) error {
 }
 
 func (u *User) Validate() error {
+
+	log.Printf("User body : %+v /n", u)
 
 	if u.Username == "" {
 		return errors.New("username is required")
