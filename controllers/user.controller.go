@@ -37,7 +37,7 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 	})
 
 	if err := result.Error; err != nil {
-		log.Fatal("[Error] while creating user" + err.Error())
+		log.Printf("[Error] while creating user" + err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   err.Error(),
 			"message": "Internal server error occured...",
@@ -88,14 +88,14 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 	accessToken, err := utils.GenerateAccessToken(user.ID, email)
 
 	if err != nil {
-		log.Fatalf("[Error] while generating accessToken %+v", err.Error())
+		log.Printf("[Error] while generating accessToken %+v", err.Error())
 		return
 	}
 
 	refreshToken, err := utils.GenerateRefreshToken(user.ID)
 
 	if err != nil {
-		log.Fatalf("[Error] while generating refreshToken %+v", err.Error())
+		log.Printf("[Error] while generating refreshToken %+v", err.Error())
 		return
 	}
 
@@ -105,6 +105,18 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Login successful!",
+		"status":  "success",
+	})
+}
+
+func (u *UserController) Logout(ctx *gin.Context) {
+
+	ctx.SetCookie("access_token", "", -1, "/", "", false, true)
+
+	ctx.SetCookie("refresh_token", "", -1, "/", "", false, true)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Logout sucessful!",
 		"status":  "success",
 	})
 }
