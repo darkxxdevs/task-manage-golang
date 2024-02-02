@@ -27,6 +27,9 @@ func Init() error {
 
 		if err := utils.AutoMigrateModels(DbConnection); err != nil {
 			log.Fatal("[Error] while migrating models to the database..", err)
+
+			DbConnection = nil
+
 		}
 	})
 

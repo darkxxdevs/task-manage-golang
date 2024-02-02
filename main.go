@@ -14,17 +14,17 @@ func main() {
 
 	utils.LoadEnvVariables()
 
-	// gin.SetMode(gin.ReleaseMode)
-
-	router := gin.Default()
-
-	routes.RegisterRoutes(router)
-
 	if err := db.Init(); err != nil {
 		log.Fatal("[Error] while initializing database connection", err)
 	}
 
 	fmt.Println("[Success] successfully initialized database connection!")
+
+	// gin.SetMode(gin.ReleaseMode)
+
+	router := gin.Default()
+
+	routes.RegisterRoutes(router)
 
 	if err := router.Run(":8000"); err != nil {
 		log.Fatal("[Error] while starting up the server", err)

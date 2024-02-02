@@ -4,8 +4,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/darkxxdevs/task-manager-api-go/models"
+	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -19,11 +21,7 @@ func NewUserController(DBconnection *gorm.DB) *UserController {
 }
 
 func (u *UserController) RegisterUser(ctx *gin.Context) {
-	username := ctx.PostForm("username")
-	email := ctx.PostForm("email")
-	password := ctx.PostForm("password")
-
-	log.Println("credentials recieved:", email, password, username)
+	username, email, password := ctx.PostForm("username"), ctx.PostForm("email"), ctx.PostForm("password")
 
 	if strings.Trim(username, "") == "" || strings.Trim(email, "") == "" || strings.Trim(password, "") == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -32,23 +30,14 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 		return
 	}
 
-	log.Println("Creating user instance ...")
-
-	newUser := models.User{
+	result := u.DB.Create(&models.User{
 		Username: username,
 		Email:    email,
 		Password: password,
-	}
-
-	log.Println("Created user instance ...")
-
-	log.Printf("New User: %+v", newUser)
-
-	result := u.DB
-
-	log.Printf("db config:: %+v", result)
+	})
 
 	if err := result.Error; err != nil {
+		log.Fatal("[Error] while creating user" + err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   err.Error(),
 			"message": "Internal server error occured...",
@@ -58,40 +47,64 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Account created successfully!",
+		"status":  "success",
 	})
 
 }
 
 func (u *UserController) LoginUser(ctx *gin.Context) {
-	var loginInput struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
+	email, password := ctx.PostForm("email"), ctx.PostForm("password")
 
-	if err := ctx.ShouldBind(&loginInput); err != nil {
+	if strings.Trim(email, "") == "" || strings.Trim(password, "") == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "Credentials cannot be empty!",
+			"status":  "error",
 		})
 		return
 	}
 
 	var user models.User
 
-	if err := u.DB.Where("email=?", loginInput.Email).First(&user).Error; err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Invalid email or password",
+	result := u.DB.Where("email=?", email).First(&user)
+
+	if errors := result.Error; errors != nil {
+		if errors == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"message": "User not found!",
+				"status":  "error",
+			})
+		}
+		return
+	}
+
+	if err := user.ComparePassword(password); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Incorrect password!",
+			"status":  "error",
 		})
 		return
 	}
 
-	if err := user.ComparePassword(loginInput.Password); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Invalid email or password",
-		})
+	accessToken, err := utils.GenerateAccessToken(user.ID, email)
+
+	if err != nil {
+		log.Fatalf("[Error] while generating accessToken %+v", err.Error())
 		return
 	}
+
+	refreshToken, err := utils.GenerateRefreshToken(user.ID)
+
+	if err != nil {
+		log.Fatalf("[Error] while generating refreshToken %+v", err.Error())
+		return
+	}
+
+	ctx.SetCookie("access_token", accessToken, int(time.Hour*2), "/", "", false, true)
+
+	ctx.SetCookie("refresh_token", refreshToken, 2592000, "/", "", false, true)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
+		"message": "Login successful!",
+		"status":  "success",
 	})
 }
