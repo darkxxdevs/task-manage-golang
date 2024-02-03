@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/darkxxdevs/task-manager-api-go/models"
+	"github.com/darkxxdevs/task-manager-api-go/services"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -30,17 +32,48 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 		return
 	}
 
-	result := u.DB.Create(&models.User{
+	localFilePath, exists := ctx.Get("localFilePath")
+
+	if !exists {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":  "avatar is required!",
+			"status": "error",
+		})
+		return
+	}
+
+	localFilePathString, ok := localFilePath.(string)
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":  "invalid type for localFilePath!",
+			"status": "error",
+		})
+		return
+	}
+
+	avatarUrl, err := services.UploadImage(localFilePathString)
+
+	if err != nil {
+		fmt.Println("error while uploading image to cloudinary!", err)
+	}
+
+	newUser := models.User{
 		Username: username,
 		Email:    email,
 		Password: password,
-	})
+	}
+
+	if len(avatarUrl) > 0 {
+		newUser.Avatar = avatarUrl
+	}
+
+	result := u.DB.Create(&newUser)
 
 	if err := result.Error; err != nil {
 		log.Printf("[Error] while creating user" + err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error":   err.Error(),
-			"message": "Internal server error occured...",
+			"message": err.Error(),
+			"status":  "error",
 		})
 		return
 	}

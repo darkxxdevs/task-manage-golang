@@ -5,6 +5,7 @@ import (
 
 	"github.com/darkxxdevs/task-manager-api-go/controllers"
 	"github.com/darkxxdevs/task-manager-api-go/db"
+	"github.com/darkxxdevs/task-manager-api-go/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,7 +30,7 @@ func RegisterApiGroups(router *gin.Engine) {
 	// APi Group
 	apiGroup := router.Group("/api/v1")
 	{
-		apiGroup.POST("/auth/signup", userController.RegisterUser)
+		apiGroup.POST("/auth/signup", middlewares.HandleAssetUpload(), userController.RegisterUser)
 		apiGroup.POST("/auth/login", userController.LoginUser)
 	}
 	{

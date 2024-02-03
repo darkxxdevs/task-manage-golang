@@ -14,6 +14,7 @@ type User struct {
 	Username                  string    `json:"username"   gorm:"uniqueIndex;not null"`
 	Password                  string    `json:"password"  gorm:"not null"`
 	Email                     string    `json:"email" gorm:"unique;not null"`
+	Avatar                    string    `json:"avatar,omitempty"`
 	ForgotPasswordToken       string    `json:"-"`
 	ForgotPasswordTokenExp    time.Time `json:"-"`
 	EmailVerificationToken    string    `json:"-"`
