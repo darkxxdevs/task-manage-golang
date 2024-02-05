@@ -32,6 +32,7 @@ func RegisterApiGroups(router *gin.Engine) {
 	{
 		apiGroup.POST("/auth/signup", middlewares.HandleAssetUpload(), userController.RegisterUser)
 		apiGroup.POST("/auth/login", userController.LoginUser)
+		apiGroup.POST("/auth/logout", userController.Logout)
 	}
 	{
 		apiGroup.GET("/tasks", taskController.GetAllTasks)
