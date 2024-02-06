@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 var JwtSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
 
 type CustomClaims struct {
-	UserId uint   `json:"user_id"`
-	Email  string `json:"email"`
+	UserId uuid.UUID `json:"_id"`
+	Email  string    `json:"email"`
 	jwt.MapClaims
 }
 
-func GenerateAccessToken(userID uint, email string) (string, error) {
+func GenerateAccessToken(userID uuid.UUID, email string) (string, error) {
 	claims := CustomClaims{
 		UserId: userID,
 		Email:  email,
@@ -29,7 +30,7 @@ func GenerateAccessToken(userID uint, email string) (string, error) {
 	return token.SignedString(JwtSecret)
 }
 
-func GenerateRefreshToken(userId uint) (string, error) {
+func GenerateRefreshToken(userId uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"Subject":   fmt.Sprintf("%d", userId),
 		"ExpiresAt": time.Now().Add(time.Hour * 24 * 30).Unix(),

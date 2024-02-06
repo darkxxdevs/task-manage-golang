@@ -3,15 +3,18 @@ package models
 import (
 	"errors"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Task struct {
+	ID uuid.UUID `gorm:"primary_key;type:uuid"`
 	gorm.Model
 	Title       string `gorm:"not null"`
 	Descrpition string
-	IsCompleted bool `gorm:"default:false"`
-	IsEdited    bool `gorm:"default:false"`
+	IsCompleted bool      `gorm:"default:false"`
+	IsEdited    bool      `gorm:"default:false"`
+	UserID      uuid.UUID `gorm:"foreignKey:UserID"`
 }
 
 func (task *Task) BeforeSave(tx *gorm.DB) (err error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/darkxxdevs/task-manager-api-go/services"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -19,9 +20,10 @@ type UserController struct {
 }
 
 type UserApiResponse struct {
-	Useranme string `json:"username"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar"`
+	ID       uuid.UUID `json:"_id"`
+	Useranme string    `json:"username"`
+	Email    string    `json:"email"`
+	Avatar   string    `json:"avatar"`
 }
 
 func NewUserController(DBconnection *gorm.DB) *UserController {
