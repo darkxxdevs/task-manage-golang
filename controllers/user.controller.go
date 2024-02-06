@@ -153,3 +153,20 @@ func (u *UserController) Logout(ctx *gin.Context) {
 		"status":  "success",
 	})
 }
+
+func (u *UserController) GetUserByEmail(email string) *models.User {
+
+	var user models.User
+
+	result := u.DB.Where("email= ?", email).First(&user)
+
+	if error := result.Error; error != nil {
+		if error == gorm.ErrRecordNotFound {
+			log.Fatal("Record not found!")
+		}
+		return nil
+	}
+
+	return &user
+
+}

@@ -1,14 +1,14 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"time"
-	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
+var JwtSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
 
 type CustomClaims struct {
 	UserId uint   `json:"user_id"`
@@ -26,7 +26,7 @@ func GenerateAccessToken(userID uint, email string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString(JwtSecret)
 }
 
 func GenerateRefreshToken(userId uint) (string, error) {
@@ -37,6 +37,22 @@ func GenerateRefreshToken(userId uint) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(jwtSecret)
+	return token.SignedString(JwtSecret)
+
+}
+
+func DecodeToken(token string) (*CustomClaims, error) {
+
+	claims := &CustomClaims{}
+
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return JwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding token %w", err)
+	}
+
+	return claims, nil
 
 }
