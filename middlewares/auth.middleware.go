@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"github.com/darkxxdevs/task-manager-api-go/controllers"
 	"github.com/darkxxdevs/task-manager-api-go/db"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
@@ -34,11 +33,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		user := cont.GetUserByEmail(details.Email)
 
-		fmt.Println(user)
-
 		c.Set("user", user)
-
-		c.Abort()
 
 	}
 

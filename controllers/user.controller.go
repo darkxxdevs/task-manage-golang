@@ -18,6 +18,12 @@ type UserController struct {
 	DB *gorm.DB
 }
 
+type UserApiResponse struct {
+	Useranme string `json:"username"`
+	Email    string `json:"email"`
+	Avatar   string `json:"avatar"`
+}
+
 func NewUserController(DBconnection *gorm.DB) *UserController {
 	return &UserController{DB: DBconnection}
 }
@@ -78,9 +84,16 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 		return
 	}
 
+	userResponse := UserApiResponse{
+		Useranme: newUser.Username,
+		Email:    newUser.Email,
+		Avatar:   newUser.Avatar,
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Account created successfully!",
-		"status":  "success",
+		"message":      "Account created successfully!",
+		"status":       "success",
+		"created_user": userResponse,
 	})
 
 }
@@ -136,9 +149,16 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 
 	ctx.SetCookie("refresh_token", refreshToken, 2592000, "/", "", false, true)
 
+	userResponse := UserApiResponse{
+		Useranme: user.Username,
+		Email:    user.Email,
+		Avatar:   user.Avatar,
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Login successful!",
 		"status":  "success",
+		"account": userResponse,
 	})
 }
 
@@ -154,7 +174,7 @@ func (u *UserController) Logout(ctx *gin.Context) {
 	})
 }
 
-func (u *UserController) GetUserByEmail(email string) *models.User {
+func (u *UserController) GetUserByEmail(email string) *UserApiResponse {
 
 	var user models.User
 
@@ -167,6 +187,12 @@ func (u *UserController) GetUserByEmail(email string) *models.User {
 		return nil
 	}
 
-	return &user
+	userResponse := UserApiResponse{
+		Useranme: user.Username,
+		Email:    user.Email,
+		Avatar:   user.Avatar,
+	}
+
+	return &userResponse
 
 }
