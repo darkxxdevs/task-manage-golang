@@ -12,12 +12,13 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookie, err := c.Cookie("access_token")
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "failed to retrive cookie",
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": "unauthorized request!",
 				"status":  "error",
 			})
-			c.Abort()
+			return
 		}
+
 		cont := controllers.NewUserController(db.DbConnection)
 
 		details, err := utils.DecodeToken(cookie)
@@ -28,12 +29,22 @@ func AuthMiddleware() gin.HandlerFunc {
 				"status":  "error",
 				"err":     err.Error(),
 			})
-			c.Abort()
+			return
 		}
 
 		user := cont.GetUserByEmail(details.Email)
 
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Invalid unauthorized request!",
+				"status":  "error",
+			})
+			return
+		}
+
 		c.Set("user", user)
+
+		c.Next()
 
 	}
 

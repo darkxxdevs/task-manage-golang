@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/darkxxdevs/task-manager-api-go/db"
 	"github.com/darkxxdevs/task-manager-api-go/routes"
@@ -26,7 +27,7 @@ func main() {
 
 	routes.RegisterRoutes(router)
 
-	if err := router.Run(":8000"); err != nil {
+	if err := router.Run(os.Getenv("SERVER_PORT")); err != nil {
 		log.Fatal("[Error] while starting up the server", err)
 	}
 

@@ -87,6 +87,7 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 	}
 
 	userResponse := UserApiResponse{
+		ID:       newUser.ID,
 		Useranme: newUser.Username,
 		Email:    newUser.Email,
 		Avatar:   newUser.Avatar,
@@ -152,6 +153,7 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 	ctx.SetCookie("refresh_token", refreshToken, 2592000, "/", "", false, true)
 
 	userResponse := UserApiResponse{
+		ID:       user.ID,
 		Useranme: user.Username,
 		Email:    user.Email,
 		Avatar:   user.Avatar,
@@ -184,12 +186,13 @@ func (u *UserController) GetUserByEmail(email string) *UserApiResponse {
 
 	if error := result.Error; error != nil {
 		if error == gorm.ErrRecordNotFound {
-			log.Fatal("Record not found!")
+			log.Print("Record not found!")
 		}
 		return nil
 	}
 
 	userResponse := UserApiResponse{
+		ID:       user.ID,
 		Useranme: user.Username,
 		Email:    user.Email,
 		Avatar:   user.Avatar,

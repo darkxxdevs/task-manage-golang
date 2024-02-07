@@ -11,7 +11,7 @@ import (
 )
 
 type User struct {
-	ID uuid.UUID `json:"_id" gorm:"type:uuid;primary_key"`
+	ID uuid.UUID `gorm:"primary_key;type:uuid"`
 	gorm.Model
 	Username                  string    `json:"username"   gorm:"uniqueIndex;not null"`
 	Password                  string    `json:"password"   gorm:"not null"`
@@ -22,6 +22,12 @@ type User struct {
 	ForgotPasswordTokenExp    time.Time `json:"-"`
 	EmailVerificationToken    string    `json:"-"`
 	EmailVerificationTokenExp time.Time `json:"-"`
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	u.ID = uuid.New()
+
+	return nil
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) error {

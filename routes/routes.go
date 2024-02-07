@@ -35,7 +35,7 @@ func RegisterApiGroups(router *gin.Engine) {
 		apiGroup.POST("/auth/logout", userController.Logout)
 	}
 	{
-		apiGroup.GET("/tasks", middlewares.AuthMiddleware(), taskController.GetAllTasks)
+		apiGroup.POST("/tasks", middlewares.AuthMiddleware(), taskController.CreateTask)
 
 	}
 

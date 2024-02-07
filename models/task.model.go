@@ -17,6 +17,13 @@ type Task struct {
 	UserID      uuid.UUID `gorm:"foreignKey:UserID"`
 }
 
+func (task *Task) BeforeCreate(tx *gorm.DB) error {
+	task.ID = uuid.New()
+
+	return nil
+
+}
+
 func (task *Task) BeforeSave(tx *gorm.DB) (err error) {
 
 	if len(task.Title) > 100 {
