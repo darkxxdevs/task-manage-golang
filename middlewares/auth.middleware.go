@@ -32,7 +32,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		user := cont.GetUserByEmail(details.Email)
+		user := cont.GetUserByID(details.UserId)
 
 		if user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{

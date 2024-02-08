@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/darkxxdevs/task-manager-api-go/models"
+	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -79,5 +80,95 @@ func (t *TaskController) CreateTask(ctx *gin.Context) {
 		"message":      "task created successfully!",
 		"status":       "success",
 		"created_task": apiResponse,
+	})
+}
+
+func (t *TaskController) UpdateTask(ctx *gin.Context) {
+	newTitle, newDescrption := ctx.PostForm("newTitle"), ctx.PostForm("desc")
+
+	if strings.Trim(newTitle, "") == "" && strings.Trim(newDescrption, "") == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Atleast one of new title or description is required!",
+			"state":   "error",
+		})
+		return
+	}
+
+	params := ctx.Request.URL.Query()
+
+	var updatedTask models.Task
+
+	taskIdSlice, ok := params["taskId"]
+	if !ok {
+		fmt.Println("[Error] taskId key not found")
+		return
+	}
+
+	if len(taskIdSlice) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Task id is required!",
+			"status":  "error",
+		})
+	}
+
+	taskId := strings.Trim(taskIdSlice[0], "")
+
+	uuid, err := utils.StringtoUuid(taskId)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid uuid format!",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	updatedTask.ID = uuid
+
+	if strings.Trim(newTitle, "") != "" {
+		updatedTask.Title = newTitle
+	}
+
+	if strings.Trim(newDescrption, "") != "" {
+		updatedTask.Descrpition = newDescrption
+	}
+
+	updatedTask.IsEdited = true
+
+	var existingTask models.Task
+
+	result := t.DB.Where("id = ? ", uuid).First(&existingTask)
+
+	if errors := result.Error; errors != nil {
+		if errors == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"message": "Task not found!",
+				"status":  "error",
+			})
+		}
+		return
+	}
+
+	updateQueryResult := t.DB.Model(&existingTask).Updates(&updatedTask)
+
+	if err := updateQueryResult.Error; err != nil {
+		fmt.Printf("[Error] task update failed ! %v", err.Error())
+		return
+	}
+
+	apiResponse := TaskApiResponse{
+		ID:          updatedTask.ID,
+		Title:       updatedTask.Title,
+		Desc:        updatedTask.Descrpition,
+		IdEdited:    updatedTask.IsEdited,
+		IsCompleted: updatedTask.IsCompleted,
+		UserID:      existingTask.UserID,
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":      "Task update successful",
+		"status":       "success",
+		"updated task": apiResponse,
 	})
 }

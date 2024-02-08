@@ -178,11 +178,11 @@ func (u *UserController) Logout(ctx *gin.Context) {
 	})
 }
 
-func (u *UserController) GetUserByEmail(email string) *UserApiResponse {
+func (u *UserController) GetUserByID(userID uuid.UUID) *UserApiResponse {
 
 	var user models.User
 
-	result := u.DB.Where("email= ?", email).First(&user)
+	result := u.DB.Where("id= ?", userID).First(&user)
 
 	if error := result.Error; error != nil {
 		if error == gorm.ErrRecordNotFound {
@@ -199,5 +199,64 @@ func (u *UserController) GetUserByEmail(email string) *UserApiResponse {
 	}
 
 	return &userResponse
+
+}
+
+func (u *UserController) UpdateUserDetails(ctx *gin.Context) {
+	newUsername, newEmail := ctx.PostForm("newUsername"), ctx.PostForm("newEmail")
+
+	if strings.Trim(newUsername, "") == "" && strings.Trim(newEmail, "") == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "No details provided , invalid operation!",
+			"status":  "error",
+		})
+		return
+	}
+
+	var updatedUser models.User
+
+	if strings.Trim(newUsername, "") != "" {
+		updatedUser.Username = newUsername
+	}
+
+	if strings.Trim(newEmail, "") != "" {
+		updatedUser.Email = newEmail
+	}
+
+	user, ok := ctx.Get("user")
+	if !ok {
+		fmt.Println("[Error] User object not found in Context")
+		return
+	}
+
+	userConv, ok := user.(*UserApiResponse)
+	if !ok {
+		fmt.Println("[Error] Invalid object  found in Context")
+		return
+	}
+
+	updateQueryResult := u.DB.Where("id=?", userConv.ID).Updates(&updatedUser)
+
+	if err := updateQueryResult.Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to update user details!",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	apiResponse := UserApiResponse{
+		ID:       userConv.ID,
+		Useranme: updatedUser.Username,
+		Email:    updatedUser.Email,
+		Avatar:   userConv.Avatar,
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":      "details updated successfully",
+		"status":       "success",
+		"updated user": apiResponse,
+	})
 
 }
