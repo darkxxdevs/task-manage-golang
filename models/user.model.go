@@ -18,8 +18,6 @@ type User struct {
 	Email                     string    `json:"email"      gorm:"unique;not null"`
 	Tasks                     []Task    `json:"tasks"       gorm:"foreignKey:UserID"`
 	Avatar                    string    `json:"avatar,omitempty"`
-	ForgotPasswordToken       string    `json:"-"`
-	ForgotPasswordTokenExp    time.Time `json:"-"`
 	EmailVerificationToken    string    `json:"-"`
 	EmailVerificationTokenExp time.Time `json:"-"`
 }

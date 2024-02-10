@@ -36,6 +36,7 @@ func RegisterApiGroups(router *gin.Engine) {
 
 		// protected routes
 		apiGroup.PATCH("/u/details", middlewares.AuthMiddleware(), userController.UpdateUserDetails)
+		apiGroup.PATCH("/r/password", middlewares.AuthMiddleware(), userController.ResetPassword)
 
 	}
 	{

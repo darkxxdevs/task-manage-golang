@@ -260,3 +260,57 @@ func (u *UserController) UpdateUserDetails(ctx *gin.Context) {
 	})
 
 }
+
+func (u *UserController) ResetPassword(ctx *gin.Context) {
+	newPassword, confirmPassword := ctx.PostForm("newPassword"), ctx.PostForm("confirmPassword")
+
+	if strings.Trim(newPassword, "") == "" || strings.Trim(confirmPassword, "") == "" {
+
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "both new password and confirmation are required!",
+			"status":  "error",
+		})
+		return
+	}
+
+	if newPassword != confirmPassword {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "passwords don't match!",
+			"status":  "error",
+		})
+		return
+	}
+
+	user, ok := ctx.Get("user")
+	if !ok {
+		fmt.Println("[Error] User object not found in Context")
+		return
+	}
+
+	userConv, ok := user.(*UserApiResponse)
+	if !ok {
+		fmt.Println("[Error] Invalid object  found in Context")
+		return
+	}
+
+	updates := models.User{
+		Password: newPassword,
+	}
+
+	updateQuery := u.DB.Where("id=?", userConv.ID).Updates(&updates)
+
+	if err := updateQuery.Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to update user details!",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "password updated successfully",
+		"status":  "success",
+	})
+
+}

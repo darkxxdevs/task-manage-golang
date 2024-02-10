@@ -20,7 +20,7 @@ func newCloud() (*cloudinary.Cloudinary, error) {
 
 func UploadImage(localpath string) (string, error) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
 	defer cancel()
 

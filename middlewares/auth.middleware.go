@@ -24,7 +24,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		details, err := utils.DecodeToken(cookie)
 
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": "Invalid unauthorized request!",
 				"status":  "error",
 				"err":     err.Error(),
@@ -35,7 +35,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		user := cont.GetUserByID(details.UserId)
 
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": "Invalid unauthorized request!",
 				"status":  "error",
 			})
