@@ -42,7 +42,8 @@ func RegisterApiGroups(router *gin.Engine) {
 	{
 		apiGroup.POST("/tasks", middlewares.AuthMiddleware(), taskController.CreateTask)
 		apiGroup.PATCH("/tasks", middlewares.AuthMiddleware(), taskController.UpdateTask)
-
+		apiGroup.GET("/tasks", middlewares.AuthMiddleware(), taskController.GetAllTaks)
+		apiGroup.PATCH("/tasks/t/status", middlewares.AuthMiddleware(), taskController.ToggleCompleteStatus)
 	}
 
 }

@@ -109,6 +109,7 @@ func (t *TaskController) UpdateTask(ctx *gin.Context) {
 			"message": "Task id is required!",
 			"status":  "error",
 		})
+		return
 	}
 
 	taskId := strings.Trim(taskIdSlice[0], "")
@@ -171,4 +172,99 @@ func (t *TaskController) UpdateTask(ctx *gin.Context) {
 		"status":       "success",
 		"updated task": apiResponse,
 	})
+}
+
+func (t *TaskController) GetAllTaks(ctx *gin.Context) {
+
+	user, ok := ctx.Get("user")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "user not found!",
+			"status":  "error",
+		})
+	}
+
+	parsedUser, ok := user.(*UserApiResponse)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Invaild User!",
+			"status":  "error",
+		})
+		return
+	}
+
+	var tasks []models.Task
+
+	response := t.DB.Where("user_id=?", parsedUser.ID).Find(&tasks)
+
+	if err := response.Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"tasks":   tasks,
+		"message": "successfully fetched user tasks!",
+		"status":  "success",
+	})
+
+}
+
+func (t *TaskController) ToggleCompleteStatus(ctx *gin.Context) {
+
+	params := ctx.Request.URL.Query()
+
+	taskIdSlice, ok := params["taskId"]
+
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "No query params were found!",
+			"status":  "error",
+		})
+		return
+	}
+
+	if len(taskIdSlice) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Empty params collection found!",
+			"status":  "error",
+		})
+		return
+	}
+
+	taskId := strings.Trim(taskIdSlice[0], "")
+
+	var task models.Task
+
+	response := t.DB.Where("id=?", taskId).First(&task)
+
+	if err := response.Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	task.IsCompleted = !task.IsCompleted
+
+	result := t.DB.Model(&task).Update("is_completed", task.IsCompleted)
+
+	if err := result.Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":      "task completion status updated successfully",
+		"status":       "success",
+		"updated_task": task,
+	})
+
 }
