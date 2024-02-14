@@ -14,6 +14,7 @@ func HandleAssetUpload() gin.HandlerFunc {
 		file, err := ctx.FormFile("avatar")
 
 		if err != nil {
+			log.Fatal("error", err.Error())
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
