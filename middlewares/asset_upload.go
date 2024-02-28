@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -14,7 +15,7 @@ func HandleAssetUpload() gin.HandlerFunc {
 		file, err := ctx.FormFile("avatar")
 
 		if err != nil {
-			log.Fatal("error", err.Error())
+			fmt.Printf("[Error] %v", err.Error())
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})

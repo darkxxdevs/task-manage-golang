@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/darkxxdevs/task-manager-api-go/db"
+	"github.com/darkxxdevs/task-manager-api-go/middlewares"
 	"github.com/darkxxdevs/task-manager-api-go/routes"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,8 @@ func main() {
 	// gin.SetMode(gin.ReleaseMode)
 
 	router := gin.Default()
+
+	router.Use(middlewares.CorsMiddleware())
 
 	routes.RegisterRoutes(router)
 

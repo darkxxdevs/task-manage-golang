@@ -33,8 +33,6 @@ func NewUserController(DBconnection *gorm.DB) *UserController {
 func (u *UserController) RegisterUser(ctx *gin.Context) {
 	username, email, password := ctx.PostForm("username"), ctx.PostForm("email"), ctx.PostForm("password")
 
-	fmt.Println("details::", username, email, password)
-
 	if strings.Trim(username, "") == "" || strings.Trim(email, "") == "" || strings.Trim(password, "") == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "credentials cannot be empty!",

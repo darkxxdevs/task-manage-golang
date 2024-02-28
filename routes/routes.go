@@ -18,14 +18,6 @@ func RegisterRoutes(router *gin.Engine) {
 		})
 	})
 
-	// Cors middlewares
-	router.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		c.Next()
-	})
-
 	RegisterApiGroups(router)
 
 }

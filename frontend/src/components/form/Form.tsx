@@ -1,64 +1,28 @@
 import React from 'react'
-import axios from "axios"
-import { useForm, SubmitHandler } from 'react-hook-form'
-
-interface FormProps {
-	type: string | undefined
-}
-
-type SingupInputs = {
-	username: string
-	password: string
-	email: string
-	avatar?: FileList
-}
-
-type LoginInputs = {
-	email: string
-	password: string
-}
+import { useForm } from 'react-hook-form'
+import createLogin from './login-handler'
+import createSignup from './signup-handler'
+import { LoginInputs, SingupInputs, FormInputs, FormProps, FormErrors } from './form-types'
 
 const Form: React.FC<FormProps> = ({ type }) => {
-	const { register, handleSubmit, formState } = useForm<LoginInputs | SingupInputs>()
+	const { register, handleSubmit, formState } = useForm<FormInputs>()
 
-	const { isSubmitting } = formState
 
+	const { isSubmitting, errors } = formState as {
+		isSubmitting: boolean
+		errors: FormErrors
+	}
 
 	const url = `${import.meta.env.VITE_API_SERVER_URL}/api/v1/auth/${type === "signup" ? "signup" : "login"}`
 
-	const submitDetails: SubmitHandler<SingupInputs | LoginInputs> = async (data) => {
-		try {
-			let formData: SingupInputs | LoginInputs
-
-			formData.email = data.email
-			formData.password = data.password
-
-
-			if (type === "signup" && 'avatar' in data) {
-
-			}
-
-			if (type === "signup" && 'username' in data) {
-				formData.append("username", data.username)
-			}
-
-
-			console.log(formData)
-
-
-			const response = await axios.post(url, data, {
-				headers: {
-					"Content-Type": "multipart/form-data"
-				}
-			})
-
-			console.log("Response::", response.data)
-
-		} catch (error: any) {
-			console.error(`Error while authentication : ${error}`)
+	const submitDetails = async (data: LoginInputs | SingupInputs) => {
+		if (type == 'login') {
+			await createLogin({ url, data: data as LoginInputs })
+		} else {
+			await createSignup({ url, data: data as SingupInputs })
 		}
-	}
 
+	}
 
 	return (
 		<form onSubmit={handleSubmit(submitDetails)} className='flex flex-col min-w-[30%] '>
@@ -78,20 +42,25 @@ const Form: React.FC<FormProps> = ({ type }) => {
 							type === "signup" && (
 								<>
 									<label htmlFor="username">Username</label>
-									<input type="text" className='bg-grey p-3 border-black border-2 rounded-2xl' {...register("username")} placeholder='enter a username' />
+									<input type="text" className='bg-grey p-3 border-black border-2 rounded-2xl' {...register("username", { required: true })} placeholder='enter a username' />
+									{errors.username && <span>*This field is required</span>}
 								</>
 							)
 						}
 						<label htmlFor="email">Email</label>
-						<input type="email" {...register("email")} className='bg-grey p-3 border-black border-2 rounded-2xl' placeholder='enter your email' />
+						<input type="email" {...register("email", { required: true })} className='bg-grey p-3 border-black border-2 rounded-2xl' placeholder='enter your email' />
+						{errors.email && <span>*This field is required</span>}
 
 						<label htmlFor="email">Password</label>
-						<input type="password" {...register("password")} className='bg-grey p-3 border-black border-2 rounded-2xl' placeholder='enter your password' />
+						<input type="password" {...register("password", { required: true })} className='bg-grey p-3 border-black border-2 rounded-2xl' placeholder='enter your password' />
+						{errors.password && <span>*This field is required</span>}
+
 						{
 							type === "signup" && (
 								<>
 									<label htmlFor="avatar">Avatar</label>
-									<input type="file" {...register("avatar")} className=' text-grey cursor-pointer custom-upload-button rounded-2xl  ' placeholder='select a file' />
+									<input type="file" {...register("avatar", { required: true })} className=' text-grey cursor-pointer custom-upload-button rounded-2xl  ' placeholder='select a file' />
+									{errors.avatar && <span>*This field is required</span>}
 								</>
 							)
 						}
