@@ -3,9 +3,16 @@ import { useForm } from 'react-hook-form'
 import createLogin from './login-handler'
 import createSignup from './signup-handler'
 import { LoginInputs, SingupInputs, FormInputs, FormProps, FormErrors } from './form-types'
+import { Link } from 'react-router-dom'
+import { useDispatch } from "react-redux"
+import { AppDispatch } from '../../store/store'
+import { login } from '../../store/authSlice'
+
 
 const Form: React.FC<FormProps> = ({ type }) => {
 	const { register, handleSubmit, formState } = useForm<FormInputs>()
+
+	const dispatch = useDispatch<AppDispatch>()
 
 
 	const { isSubmitting, errors } = formState as {
@@ -17,7 +24,8 @@ const Form: React.FC<FormProps> = ({ type }) => {
 
 	const submitDetails = async (data: LoginInputs | SingupInputs) => {
 		if (type == 'login') {
-			await createLogin({ url, data: data as LoginInputs })
+			const payload = await createLogin({ url, data: data as LoginInputs })
+			dispatch(login(payload))
 		} else {
 			await createSignup({ url, data: data as SingupInputs })
 		}
@@ -64,6 +72,8 @@ const Form: React.FC<FormProps> = ({ type }) => {
 								</>
 							)
 						}
+
+						{type !== 'login' ? <span className='text-sm'>Don't have an account ? <Link to={"/auth/login"} className='text-blue-500'>Login </Link>instead</span> : <span className='text-sm'>Already have an account <Link to={"/auth/signup"} className='text-blue-500'>SignUp </Link>instead</span>}
 
 						<button type='submit' className='mt-5 p-3  rounded-2xl font-bold bg-black text-white'>{
 							type === "signup" ? "Register" : "Login"

@@ -12,7 +12,7 @@ export type LoginInputs = {
 }
 
 export interface FormProps {
-	type: 'login' | 'signup'
+	type: string
 }
 
 export type FormErrors = {

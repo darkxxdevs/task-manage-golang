@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 
 
 interface SignupProps {
@@ -27,9 +27,14 @@ const createSignup = async (data: SignupProps) => {
 
 		console.log(`[Response]: ${response.data}`)
 
-	} catch (error: any) {
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			console.error(`[Error]: ${error.response?.data.message}`)
+		} else {
+			const unknownError = error as AxiosError
+			console.error(`[Error]: ${unknownError.message}`)
+		}
 
-		console.error(`[Error]: ${error.response.data.message}`)
 	}
 
 }
