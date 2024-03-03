@@ -34,6 +34,7 @@ func RegisterApiGroups(router *gin.Engine) {
 		apiGroup.POST("/auth/login", userController.LoginUser)
 		apiGroup.POST("/auth/logout", userController.Logout)
 		apiGroup.POST("/auth/refresh-token", userController.RenewAccessToken)
+		apiGroup.GET("/auth/c/user", middlewares.AuthMiddleware(), userController.GetCurrentUser)
 
 		// protected routes
 		apiGroup.PATCH("/u/details", middlewares.AuthMiddleware(), userController.UpdateUserDetails)

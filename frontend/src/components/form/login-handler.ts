@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios"
+import axios from "axios"
 
 
 interface LoginProps {
@@ -20,21 +20,17 @@ const createLogin = async (data: LoginProps) => {
 			{
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded'
-				}
+				},
+				withCredentials: true
 			}
 		)
 
-		console.log(response.data.account)
+		localStorage.setItem("access_token", response.data.access_token)
 
 		return response.data.account
 
 	} catch (error) {
-		if (axios.isAxiosError(error)) {
-			console.error(`[Error]: ${error.response?.data.message}`)
-		} else {
-			const unknownError = error as AxiosError
-			console.error(`[Error] ${unknownError.message}`)
-		}
+		return error
 	}
 
 }

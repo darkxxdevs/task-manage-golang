@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import createLogin from './login-handler'
 import createSignup from './signup-handler'
 import { LoginInputs, SingupInputs, FormInputs, FormProps, FormErrors } from './form-types'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from "react-redux"
 import { AppDispatch } from '../../store/store'
 import { login } from '../../store/authSlice'
@@ -11,6 +11,7 @@ import { login } from '../../store/authSlice'
 
 const Form: React.FC<FormProps> = ({ type }) => {
 	const { register, handleSubmit, formState } = useForm<FormInputs>()
+	const naviagate = useNavigate()
 
 	const dispatch = useDispatch<AppDispatch>()
 
@@ -20,14 +21,25 @@ const Form: React.FC<FormProps> = ({ type }) => {
 		errors: FormErrors
 	}
 
-	const url = `${import.meta.env.VITE_API_SERVER_URL}/api/v1/auth/${type === "signup" ? "signup" : "login"}`
+
+	const url = `/auth/${type === "signup" ? "signup" : "login"}`
 
 	const submitDetails = async (data: LoginInputs | SingupInputs) => {
 		if (type == 'login') {
 			const payload = await createLogin({ url, data: data as LoginInputs })
-			dispatch(login(payload))
+			if (payload) {
+				dispatch(login(payload))
+				naviagate('/', {
+					replace: true
+				})
+			}
 		} else {
-			await createSignup({ url, data: data as SingupInputs })
+			const createdUser = await createSignup({ url, data: data as SingupInputs })
+			if (createdUser) {
+				naviagate("/auth/login", {
+					replace: true
+				})
+			}
 		}
 
 	}

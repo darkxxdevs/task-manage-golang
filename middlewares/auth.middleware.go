@@ -1,42 +1,52 @@
 package middlewares
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/darkxxdevs/task-manager-api-go/controllers"
 	"github.com/darkxxdevs/task-manager-api-go/db"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cookie, err := c.Cookie("access_token")
-		if err != nil {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "unauthorized request!",
+				"message": "unauthorized request! Authorization header is missing",
 				"status":  "error",
 			})
 			return
 		}
 
-		cont := controllers.NewUserController(db.DbConnection)
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": "Unauthorized request! Invalid Authorization header format",
+				"status":  "error",
+			})
+			return
+		}
 
-		details, err := utils.DecodeToken(cookie)
+		token := strings.TrimPrefix(authHeader, "Bearer ")
 
+		details, err := utils.DecodeToken(token)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "Invalid unauthorized request!",
+				"message": "Invalid unauthorized request! Token verification failed",
 				"status":  "error",
 				"err":     err.Error(),
 			})
 			return
 		}
 
-		user := cont.GetUserByID(details.UserId)
+		cont := controllers.NewUserController(db.DbConnection)
 
+		user := cont.GetUserByID(details.UserId)
 		if user == nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "Invalid unauthorized request!",
+				"message": "Invalid unauthorized request! User not found",
 				"status":  "error",
 			})
 			return

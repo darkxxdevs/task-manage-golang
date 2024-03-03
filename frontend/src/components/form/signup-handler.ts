@@ -25,7 +25,8 @@ const createSignup = async (data: SignupProps) => {
 				}
 			})
 
-		console.log(`[Response]: ${response.data}`)
+		return response.data.created_user
+
 
 	} catch (error) {
 		if (axios.isAxiosError(error)) {

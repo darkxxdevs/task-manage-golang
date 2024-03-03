@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/darkxxdevs/task-manager-api-go/models"
 	"github.com/darkxxdevs/task-manager-api-go/services"
@@ -148,8 +147,6 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", accessToken, int(time.Hour*2), "/", "", false, true)
-
 	ctx.SetCookie("refresh_token", refreshToken, 2592000, "/", "", false, true)
 
 	userResponse := UserApiResponse{
@@ -160,15 +157,14 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Login successful!",
-		"status":  "success",
-		"account": userResponse,
+		"message":      "Login successful!",
+		"status":       "success",
+		"account":      userResponse,
+		"access_token": accessToken,
 	})
 }
 
 func (u *UserController) Logout(ctx *gin.Context) {
-
-	ctx.SetCookie("access_token", "", -1, "/", "", false, true)
 
 	ctx.SetCookie("refresh_token", "", -1, "/", "", false, true)
 
@@ -202,6 +198,38 @@ func (u *UserController) GetUserByID(userID uuid.UUID) *UserApiResponse {
 
 }
 
+func (u *UserController) GetCurrentUser(ctx *gin.Context) {
+	user, ok := ctx.Get("user")
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Unauthorized request ! user not found in the current context",
+			"status":  "error",
+		})
+	}
+
+	userConv, ok := user.(*UserApiResponse)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Unauthorized request ! user not found in the current context",
+			"status":  "error",
+		})
+	}
+
+	apiReponse := UserApiResponse{
+		ID:       userConv.ID,
+		Useranme: userConv.Useranme,
+		Email:    userConv.Email,
+		Avatar:   userConv.Avatar,
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":      "Unauthorized request ! user not found in the current context",
+		"status":       "error",
+		"current_user": apiReponse,
+	})
+
+}
+
 func (u *UserController) UpdateUserDetails(ctx *gin.Context) {
 	newUsername, newEmail := ctx.PostForm("newUsername"), ctx.PostForm("newEmail")
 
@@ -225,13 +253,19 @@ func (u *UserController) UpdateUserDetails(ctx *gin.Context) {
 
 	user, ok := ctx.Get("user")
 	if !ok {
-		fmt.Println("[Error] User object not found in Context")
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Unauthorized request , user not found!",
+			"status":  "error",
+		})
 		return
 	}
 
 	userConv, ok := user.(*UserApiResponse)
 	if !ok {
-		fmt.Println("[Error] Invalid object  found in Context")
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error parsing user",
+			"status":  "error",
+		})
 		return
 	}
 
@@ -283,13 +317,19 @@ func (u *UserController) ResetPassword(ctx *gin.Context) {
 
 	user, ok := ctx.Get("user")
 	if !ok {
-		fmt.Println("[Error] User object not found in Context")
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Unauthorized request , user not found!",
+			"status":  "error",
+		})
 		return
 	}
 
 	userConv, ok := user.(*UserApiResponse)
 	if !ok {
-		fmt.Println("[Error] Invalid object  found in Context")
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error parsing user",
+			"status":  "error",
+		})
 		return
 	}
 
