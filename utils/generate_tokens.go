@@ -57,3 +57,19 @@ func DecodeToken(token string) (*CustomClaims, error) {
 	return claims, nil
 
 }
+
+func RefereshAccessToken(refreshToken string) (string, error) {
+
+	claims, err := DecodeToken(refreshToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	newAccessToken, err := GenerateAccessToken(claims.UserId, claims.Email)
+	if err != nil {
+		return "", err
+	}
+
+	return newAccessToken, nil
+}

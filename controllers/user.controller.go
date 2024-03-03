@@ -314,3 +314,36 @@ func (u *UserController) ResetPassword(ctx *gin.Context) {
 	})
 
 }
+
+func (u *UserController) RenewAccessToken(ctx *gin.Context) {
+
+	refreshToken, err := ctx.Cookie("refresh_token")
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "refresh token not found!",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	newAccessToken, err := utils.RefereshAccessToken(refreshToken)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while refreshing the access token",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":      "AcessToken refresh successfull!",
+		"status":       "success",
+		"access_token": newAccessToken,
+	})
+
+}
