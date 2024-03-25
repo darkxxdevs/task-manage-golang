@@ -1,27 +1,32 @@
-import { PrivateRoute, PublicRoute } from "./access.config"
 import { createBrowserRouter } from "react-router-dom"
 import { Home, Auth, Logout } from "../pages"
-
+import { AuthLayout } from "../components"
 
 const router = createBrowserRouter([
-	{
-		path: "/",
-		element: <PrivateRoute element={< Home />} />
-	},
-	{
-		path: "/auth/:type",
-		element: <PublicRoute element={
-			<Auth />} />
-	},
-	{
-		path: "/auth/logout",
-		element: <PrivateRoute element={
-			<Logout />} />
-	}
+    {
+        path: "/",
+        element: (
+            <AuthLayout authentication>
+                <Home />
+            </AuthLayout>
+        ),
+    },
+    {
+        path: "/auth/:type",
+        element: (
+            <AuthLayout authentication={false}>
+                <Auth />
+            </AuthLayout>
+        ),
+    },
+    {
+        path: "/auth/logout",
+        element: (
+            <AuthLayout authentication>
+                <Logout />
+            </AuthLayout>
+        ),
+    },
 ])
 
-export {
-	router
-}
-
-
+export { router }

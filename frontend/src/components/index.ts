@@ -1,5 +1,7 @@
-import Navbar from "./navbar/navbar";
-import Form from "./form/Form";
+import Navbar from "./navbar/navbar"
+import AuthLayout from "./AuthLayout/authLayout"
+import Form from "./Auth-form/Form"
+import Spinner from "./Spinner/spinner"
+import Fallback from "./Fallback/FallBack"
 
-
-export { Navbar, Form }
+export { Navbar, Fallback, Spinner, Form, AuthLayout }
