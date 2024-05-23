@@ -17,7 +17,8 @@ func HandleAssetUpload() gin.HandlerFunc {
 		if err != nil {
 			fmt.Printf("[Error] %v", err.Error())
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
+				"error":   err.Error(),
+				"message": "Avatar is missing!",
 			})
 			ctx.Abort()
 			return

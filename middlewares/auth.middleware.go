@@ -29,7 +29,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		token := strings.TrimPrefix(authHeader, "Bearer ")
+		token := strings.TrimPrefix(authHeader, "Bearer")
 
 		details, err := utils.DecodeToken(token)
 		if err != nil {

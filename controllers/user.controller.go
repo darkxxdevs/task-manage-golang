@@ -32,6 +32,8 @@ func NewUserController(DBconnection *gorm.DB) *UserController {
 func (u *UserController) RegisterUser(ctx *gin.Context) {
 	username, email, password := ctx.PostForm("username"), ctx.PostForm("email"), ctx.PostForm("password")
 
+	fmt.Println(username, email, password)
+
 	if strings.Trim(username, "") == "" || strings.Trim(email, "") == "" || strings.Trim(password, "") == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "credentials cannot be empty!",
@@ -156,11 +158,12 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 		Avatar:   user.Avatar,
 	}
 
+	ctx.SetCookie("access_token", accessToken, 3600, "/", "localhost", false, true)
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"message":      "Login successful!",
-		"status":       "success",
-		"account":      userResponse,
-		"access_token": accessToken,
+		"message": "Login successful!",
+		"status":  "success",
+		"account": userResponse,
 	})
 }
 
@@ -368,7 +371,7 @@ func (u *UserController) RenewAccessToken(ctx *gin.Context) {
 		return
 	}
 
-	newAccessToken, err := utils.RefereshAccessToken(refreshToken)
+	tokens, err := utils.RefereshAccessToken(refreshToken)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -380,10 +383,13 @@ func (u *UserController) RenewAccessToken(ctx *gin.Context) {
 
 	}
 
+	ctx.SetCookie("access_token", tokens[0], 3600, "/", "localhost", false, true)
+
+	ctx.SetCookie("refresh_token", tokens[1], 3600, "/", "localhost", false, true)
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"message":      "AcessToken refresh successfull!",
-		"status":       "success",
-		"access_token": newAccessToken,
+		"message": "AcessToken refresh successfull!",
+		"status":  "success",
 	})
 
 }
