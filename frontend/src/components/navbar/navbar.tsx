@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import { Menu, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { NavbarProps } from "./nav-types"
+import { ModeToggle } from "../ui/theme/mode-toggle"
 
 const Navbar: React.FC<NavbarProps> = ({ user }) => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
@@ -101,6 +102,9 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
                                             />
                                         </button>
                                     </div>
+                                </div>
+                                <div className="toggle-theme">
+                                    <ModeToggle />
                                 </div>
                                 <div className="mt-6"></div>
                                 {user && (
