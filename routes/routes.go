@@ -32,7 +32,7 @@ func RegisterApiGroups(router *gin.Engine) {
 	{
 		apiGroup.POST("/auth/signup", middlewares.HandleAssetUpload(), userController.RegisterUser)
 		apiGroup.POST("/auth/login", userController.LoginUser)
-		apiGroup.POST("/auth/logout", userController.Logout)
+		apiGroup.POST("/auth/logout", middlewares.AuthMiddleware(), userController.Logout)
 		apiGroup.POST("/auth/refresh-token", userController.RenewAccessToken)
 		apiGroup.GET("/auth/c/user", middlewares.AuthMiddleware(), userController.GetCurrentUser)
 

@@ -17,8 +17,9 @@ import {
 } from "../ui/form"
 import { Input } from "../ui/input"
 import { PasswordInput } from ".."
-import axios from "axios"
 import Spinner from "../Spinner/spinner.tsx"
+import axios from "axios"
+import { serverUrl } from "@/constants/apiServer.ts"
 
 const SignupForm: React.FC = () => {
     const navigator = useNavigate()
@@ -43,10 +44,9 @@ const SignupForm: React.FC = () => {
 
     const onSubmit = async (values: z.infer<typeof SingnUpDataSchema>) => {
         try {
-            console.log(values)
             setIsSubmitting(true)
             const response = await axios.post(
-                `${envVars.VITE_SERVER_URL}/api/v1/auth/signup`,
+                `${serverUrl}/auth/signup`,
                 {
                     username: values.name,
                     email: values.email,
@@ -59,8 +59,6 @@ const SignupForm: React.FC = () => {
                     },
                 }
             )
-
-            console.error(response.data.error)
 
             if (response.status === 200) {
                 navigator("/auth/login", { replace: true })

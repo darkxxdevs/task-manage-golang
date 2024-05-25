@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -21,7 +22,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if !strings.HasPrefix(authHeader, "Bearer ") {
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": "Unauthorized request! Invalid Authorization header format",
 				"status":  "error",
@@ -29,14 +31,26 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		token := strings.TrimPrefix(authHeader, "Bearer")
+		token := parts[1]
 
 		details, err := utils.DecodeToken(token)
+
+		fmt.Println("Details:", details)
+
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": "Invalid unauthorized request! Token verification failed",
 				"status":  "error",
 				"err":     err.Error(),
+			})
+			return
+		}
+
+		if err := details.Valid(); err != nil {
+			fmt.Println(err.Error())
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": "Unauthorized request! Token has expired",
+				"status":  "error",
 			})
 			return
 		}

@@ -1,5 +1,6 @@
 import React from "react"
 import ServerCrashSvg from "../../assets/server_crash.svg"
+import { Button } from "@/components/ui/button"
 
 const Fallback: React.FC<{ error: Error }> = ({ error }) => {
     const refereshPage = () => {
@@ -18,12 +19,12 @@ const Fallback: React.FC<{ error: Error }> = ({ error }) => {
             <p>{error?.message}</p>
             <p>Please Try again later sometime</p>
 
-            <button
+            <Button
                 onClick={() => refereshPage()}
-                className="bg-black p-3 mt-3 rounded-md text-white font-bold"
+                className="bg-black text-white font-bold rounded-[10px] hover:bg-[#1e1e2e] w-full mt-4"
             >
                 refresh
-            </button>
+            </Button>
         </div>
     )
 }

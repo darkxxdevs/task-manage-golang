@@ -1,65 +1,110 @@
 package utils
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
-var JwtSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
+var jwtSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
+
+type StandardClaims struct {
+	Subject   string `json:"sub"`
+	ExpiresAt int64  `json:"exp"`
+	IssuedAt  int64  `json:"iat"`
+	NotBefore int64  `json:"nbf"`
+	Issuer    string `json:"iss"`
+	Audience  string `json:"aud"`
+	ID        string `json:"jti"`
+}
 
 type CustomClaims struct {
 	UserId uuid.UUID `json:"_id"`
 	Email  string    `json:"email"`
-	jwt.MapClaims
+	StandardClaims
+}
+
+func (c *CustomClaims) Valid() error {
+	now := time.Now().Unix()
+
+	if now > c.ExpiresAt {
+		return fmt.Errorf("token has expired")
+	}
+
+	return nil
+}
+
+func (c *CustomClaims) GetAudience() (jwt.ClaimStrings, error) {
+	return jwt.ClaimStrings{c.Audience}, nil
 }
 
 func GenerateAccessToken(userID uuid.UUID, email string) (string, error) {
+	now := time.Now()
 	claims := CustomClaims{
 		UserId: userID,
 		Email:  email,
-		MapClaims: jwt.MapClaims{
-			"ExpiresAt": time.Now().Add(time.Hour * 2).Unix(),
+		StandardClaims: StandardClaims{
+			Subject:   userID.String(),
+			ExpiresAt: now.Add(time.Hour * 2).Unix(),
+			IssuedAt:  now.Unix(),
+			NotBefore: now.Unix(),
+			Issuer:    "organico",
+			Audience:  "general",
+			ID:        uuid.New().String(),
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(JwtSecret)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
+
+	return token.SignedString(jwtSecret)
 }
 
-func GenerateRefreshToken(userId uuid.UUID) (string, error) {
-	claims := jwt.MapClaims{
-		"Subject":   fmt.Sprintf("%d", userId),
-		"ExpiresAt": time.Now().Add(time.Hour * 24 * 30).Unix(),
+func GenerateRefreshToken() (string, error) {
+	claims := StandardClaims{
+		Subject:   uuid.New().String(),
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 30).Unix(),
+		IssuedAt:  time.Now().Unix(),
+		NotBefore: time.Now().Unix(),
+		Issuer:    "oragnico",
+		Audience:  "general",
+		ID:        uuid.New().String(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString(JwtSecret)
-
+	return token.SignedString(jwtSecret)
 }
 
 func DecodeToken(token string) (*CustomClaims, error) {
-
 	claims := &CustomClaims{}
 
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return JwtSecret, nil
-	})
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("[error]:invalid jwt-format encounrtered while decoding")
+	}
 
+	payloadBytes, err := decodeBase64(parts[1])
 	if err != nil {
-		return nil, fmt.Errorf("error while decoding token %w", err)
+		return nil, fmt.Errorf("error decoding payloadBytes : %v", err)
+	}
+
+	if err := json.Unmarshal(payloadBytes, claims); err != nil {
+		return nil, fmt.Errorf("error unmarshaling payload: %v", err)
 	}
 
 	return claims, nil
-
 }
 
-func RefereshAccessToken(refreshToken string) ([]string, error) {
+func decodeBase64(input string) ([]byte, error) {
+	return base64.RawURLEncoding.DecodeString(input)
+}
 
+func RefreshAccessToken(refreshToken string) ([]string, error) {
 	claims, err := DecodeToken(refreshToken)
 
 	if err != nil {
@@ -67,12 +112,11 @@ func RefereshAccessToken(refreshToken string) ([]string, error) {
 	}
 
 	newAccessToken, err := GenerateAccessToken(claims.UserId, claims.Email)
-
 	if err != nil {
 		return nil, err
 	}
 
-	newRefreshToken, err := GenerateRefreshToken(claims.UserId)
+	newRefreshToken, err := GenerateRefreshToken()
 
 	if err != nil {
 		return nil, err
@@ -80,4 +124,31 @@ func RefereshAccessToken(refreshToken string) ([]string, error) {
 
 	return []string{newAccessToken, newRefreshToken}, nil
 
+}
+
+func (s StandardClaims) GetSubject() (string, error) {
+	return s.Subject, nil
+}
+
+func (s StandardClaims) GetIssuedAt() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(s.IssuedAt, 0)), nil
+}
+
+func (s StandardClaims) GetNotBefore() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(s.NotBefore, 0)), nil
+}
+
+func (s StandardClaims) GetID() string {
+	return s.ID
+}
+
+func (s StandardClaims) GetIssuer() (string, error) {
+	return s.Issuer, nil
+}
+func (s StandardClaims) GetAudience() (jwt.ClaimStrings, error) {
+	return jwt.ClaimStrings{s.Audience}, nil
+}
+
+func (s StandardClaims) GetExpirationTime() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(s.ExpiresAt, 0)), nil
 }

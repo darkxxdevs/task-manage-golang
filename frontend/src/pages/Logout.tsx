@@ -1,10 +1,9 @@
-import axios from "axios"
 import React, { useEffect } from "react"
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "../store/store"
 import { useNavigate } from "react-router-dom"
-import { envVars } from "@/lib/validation"
 import { logout } from "../store/authSlice"
+import { apiClient } from "@/config/axios.config"
 
 const Logout: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>()
@@ -13,17 +12,17 @@ const Logout: React.FC = () => {
     useEffect(() => {
         ;(async () => {
             try {
-                const response = await axios.post(
-                    `${envVars.VITE_SERVER_URL}/api/v1/auth/logout`
-                )
+                const response = await apiClient.post("/auth/logout")
 
-                if (response.data) {
+                if (response.status === 200) {
                     dispatch(logout())
+                    localStorage.removeItem("access_token")
+                    localStorage.removeItem("user")
                     navigate("/auth/login", {
                         replace: true,
                     })
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Error while logging out user!", error)
             }
         })()

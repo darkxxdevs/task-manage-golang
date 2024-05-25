@@ -1,8 +1,9 @@
 import React, { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import axios from "axios"
 import Fallback from "../Fallback/FallBack.tsx"
 import { useForm } from "react-hook-form"
-import { envVars, loginDataSchema } from "@/lib/validation"
+import { loginDataSchema } from "@/lib/validation"
 import { z } from "zod"
 import { Button } from "../ui/button"
 import { Link, useNavigate } from "react-router-dom"
@@ -17,23 +18,17 @@ import {
 } from "../ui/form"
 import { Input } from "../ui/input"
 import { PasswordInput, Spinner } from ".."
-import axios from "axios"
-import { useDispatch } from "react-redux"
-import { AppDispatch } from "@/store/store.ts"
+import { useDispatch, useSelector } from "react-redux"
+import { AppDispatch, RootState } from "@/store/store.ts"
 import { login } from "@/store/authSlice.ts"
-import { getCookie } from "@/config/axios.config.ts"
+import { initalize } from "@/store/failureSlice.ts"
+import { serverUrl } from "@/constants/apiServer.ts"
 
 const LoginForm: React.FC = () => {
     const navigator = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-    const [failure, setFailure] = useState<{
-        state: boolean
-        error: Error | null
-    }>({
-        state: false,
-        error: null,
-    })
+    const failure = useSelector((state: RootState) => state.failure)
 
     const form = useForm<z.infer<typeof loginDataSchema>>({
         resolver: zodResolver(loginDataSchema),
@@ -47,7 +42,7 @@ const LoginForm: React.FC = () => {
         try {
             setIsSubmitting(true)
             const response = await axios.post(
-                `${envVars.VITE_SERVER_URL}/api/v1/auth/login`,
+                `${serverUrl}/auth/login`,
                 {
                     ...values,
                 },
@@ -55,32 +50,35 @@ const LoginForm: React.FC = () => {
                     headers: {
                         "Content-Type": "multipart/form-data",
                     },
+                    withCredentials: true,
                 }
             )
 
-            const data = response.data.account
-
             if (response.status === 200) {
+                const data = response.data.account
+
                 dispatch(
                     login({
                         ...data,
-                        access_token: getCookie("access_token"),
+                        access_token: response.data.accessToken,
                     })
                 )
                 navigator("/", { replace: true })
             }
-        } catch (error) {
-            console.error(`Error while signing up ${error}`)
-            setFailure({
-                state: true,
-                error: error as Error,
-            })
+        } catch (err) {
+            console.error(`Error while signing up ${err}`)
+            dispatch(
+                initalize({
+                    status: true,
+                    error: err as Error,
+                })
+            )
         } finally {
             setIsSubmitting(false)
         }
     }
 
-    if (failure.state) {
+    if (failure.status) {
         return <Fallback error={failure.error as Error} />
     }
 

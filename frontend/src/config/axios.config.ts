@@ -1,46 +1,44 @@
-import { envVars } from "@/lib/validation"
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
+import { checkTokenExpiry } from "@/utils/cookies/cookie"
+import { serverUrl } from "@/constants/apiServer"
 
 const apiClient = axios.create({
+    baseURL: serverUrl,
     withCredentials: true,
 })
 
 apiClient.interceptors.request.use(
     async (config: InternalAxiosRequestConfig<any>) => {
-        let accessToken = localStorage.getItem("access_token")
-        const refreshToken = localStorage.getItem("refresh_token")
+        try {
+            const isTokenExpired = checkTokenExpiry("access_token")
 
-        if (!accessToken || !refreshToken) {
-            return config
-        }
-
-        const { ExpiresAt } = JSON.parse(atob(accessToken.split(".")[1]))
-
-        if (Date.now() >= ExpiresAt * 1000 - 5000) {
-            try {
+            if (isTokenExpired) {
                 const response = await axios.post(
-                    `${envVars.VITE_SERVER_URL}/api/v1/auth/refresh-token`,
+                    `${serverUrl}auth/refresh-token`,
+                    {},
                     {
-                        refresh_token: refreshToken,
+                        withCredentials: true,
                     }
                 )
 
-                if (response.data) {
-                    accessToken = getCookie("access_token")
-                    if (accessToken) {
-                        localStorage.setItem("access_token", accessToken)
-                    }
+                const newAccessToken = response.data.accessToken
+                if (newAccessToken) {
+                    console.log("got new accessToken")
                 }
-            } catch (error) {
-                console.error(`Axios config error: ${error}`)
-
-                throw error
+                localStorage.setItem(
+                    "access_token",
+                    JSON.stringify(newAccessToken)
+                )
             }
+
+            const token = localStorage.getItem("access_token")
+
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`
+            }
+        } catch (error) {
+            console.error(`Error refreshing access_token : ${error}`)
         }
-
-        config.headers = config.headers || {}
-
-        config.headers.Authorization = `Bearer ${accessToken}`
 
         return config as InternalAxiosRequestConfig
     },
@@ -50,12 +48,4 @@ apiClient.interceptors.request.use(
     }
 )
 
-export function getCookie(name: string): string | null {
-    const value = `; ${document.cookie}`
-    const parts = value.split(`; ${name}=`)
-    if (parts.length === 2) return parts.pop()?.split(";").shift() || null
-
-    return null
-}
-
-export default apiClient
+export { apiClient }
