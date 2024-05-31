@@ -1,13 +1,20 @@
+import React, { Suspense, lazy } from "react"
 import { createBrowserRouter } from "react-router-dom"
-import { Home, Auth, Logout } from "../pages"
 import { AuthLayout } from "../components"
+import { Spinner } from "../components"
+
+const Home = lazy(() => import("../pages/Home"))
+const Auth = lazy(() => import("../pages/Auth/Auth"))
+const Logout = lazy(() => import("../pages/Logout"))
 
 const router = createBrowserRouter([
     {
         path: "/",
         element: (
             <AuthLayout authentication>
-                <Home />
+                <Suspense fallback={<Spinner loading />}>
+                    <Home />
+                </Suspense>
             </AuthLayout>
         ),
     },
@@ -15,7 +22,9 @@ const router = createBrowserRouter([
         path: "/auth/:type",
         element: (
             <AuthLayout authentication={false}>
-                <Auth />
+                <Suspense fallback={<Spinner loading />}>
+                    <Auth />
+                </Suspense>
             </AuthLayout>
         ),
     },
@@ -23,7 +32,9 @@ const router = createBrowserRouter([
         path: "/auth/logout",
         element: (
             <AuthLayout authentication>
-                <Logout />
+                <Suspense fallback={<Spinner loading />}>
+                    <Logout />
+                </Suspense>
             </AuthLayout>
         ),
     },

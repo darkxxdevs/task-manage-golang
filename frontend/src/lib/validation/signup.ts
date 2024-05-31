@@ -9,6 +9,7 @@ const usernameValidation = z
         message: "invalid username",
     })
 
+
 export const SingnUpDataSchema = z.object({
     name: usernameValidation,
     email: z

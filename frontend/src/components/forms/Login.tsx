@@ -85,7 +85,7 @@ const LoginForm: React.FC = () => {
     if (isSubmitting) {
         return (
             <div className="align-middle">
-                <Spinner loading color={"#000000"} />
+                <Spinner loading />
             </div>
         )
     }

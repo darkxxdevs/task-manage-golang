@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -36,8 +35,6 @@ func UploadImage(localpath string) (string, error) {
 	if err != nil {
 		log.Fatal("[Error] while uploading assets..", err)
 	}
-
-	fmt.Println("[Successful] cloudinary image upload!")
 
 	return response.URL, nil
 }

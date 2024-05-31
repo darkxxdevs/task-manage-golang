@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate } from "react-router-dom"
-import { SingnUpDataSchema, envVars } from "@/lib/validation"
+import { SingnUpDataSchema } from "@/lib/validation"
 import Fallback from "../Fallback/FallBack.tsx"
 import { z } from "zod"
 import { Button } from "../ui/button"
@@ -20,17 +20,17 @@ import { PasswordInput } from ".."
 import Spinner from "../Spinner/spinner.tsx"
 import axios from "axios"
 import { serverUrl } from "@/constants/apiServer.ts"
+import { useDispatch, useSelector } from "react-redux"
+import { AppDispatch, RootState } from "@/store/store.ts"
+import { initalize } from "@/store/failureSlice.ts"
 
 const SignupForm: React.FC = () => {
     const navigator = useNavigate()
+    const disPatch = useDispatch<AppDispatch>()
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-    const [failure, setFailure] = useState<{
-        state: boolean
-        error: Error | null
-    }>({
-        state: false,
-        error: null,
-    })
+    const { status: failureStatus, error: failureError } = useSelector(
+        (state: RootState) => state.failure
+    )
 
     const form = useForm<z.infer<typeof SingnUpDataSchema>>({
         resolver: zodResolver(SingnUpDataSchema),
@@ -65,22 +65,24 @@ const SignupForm: React.FC = () => {
             }
         } catch (error) {
             console.error(`Error sending request ${error}`)
-            setFailure({
-                state: true,
-                error: error as Error,
-            })
+            disPatch(
+                initalize({
+                    status: true,
+                    error: error as Error,
+                })
+            )
         } finally {
             setIsSubmitting(false)
         }
     }
 
-    if (failure.state) {
-        return <Fallback error={failure.error as Error} />
+    if (failureStatus) {
+        return <Fallback error={failureError as Error} />
     }
 
     return isSubmitting ? (
         <div className="align-middle">
-            <Spinner loading color={"#000000"} />
+            <Spinner loading />
         </div>
     ) : (
         <Form {...form}>

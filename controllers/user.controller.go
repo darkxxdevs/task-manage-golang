@@ -2,16 +2,15 @@ package controllers
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	"strings"
-
 	"github.com/darkxxdevs/task-manager-api-go/models"
 	"github.com/darkxxdevs/task-manager-api-go/services"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"log"
+	"net/http"
+	"strings"
 )
 
 type UserController struct {
@@ -32,11 +31,21 @@ func NewUserController(DBconnection *gorm.DB) *UserController {
 func (u *UserController) RegisterUser(ctx *gin.Context) {
 	username, email, password := ctx.PostForm("username"), ctx.PostForm("email"), ctx.PostForm("password")
 
-	fmt.Println(username, email, password)
-
 	if strings.Trim(username, "") == "" || strings.Trim(email, "") == "" || strings.Trim(password, "") == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "credentials cannot be empty!",
+		})
+		return
+	}
+
+	var existingUser models.User
+
+	result := u.DB.Where("email=?", email).First(&existingUser)
+
+	if err := result.Error; err == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "User with the given email already exists",
+			"status":  "error",
 		})
 		return
 	}
@@ -76,7 +85,7 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 		newUser.Avatar = avatarUrl
 	}
 
-	result := u.DB.Create(&newUser)
+	result = u.DB.Create(&newUser)
 
 	if err := result.Error; err != nil {
 		log.Printf("[Error] while creating user" + err.Error())

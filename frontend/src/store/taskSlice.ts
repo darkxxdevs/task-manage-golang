@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 
-interface TaskProps {
+export interface TaskProps {
     id: string
     title: string
     description: string
@@ -11,22 +11,23 @@ interface TaskProps {
 
 interface TaskStateProps {
     existingTask: boolean
-    fetchedTasks: TaskProps[] | []
+    fetchedTasks: TaskProps[]
 }
 
-const initialState: TaskStateProps = {
+const defaultInitialState: TaskStateProps = {
     existingTask: false,
     fetchedTasks: [],
 }
 
 const taskSlice = createSlice({
     name: "task",
-    initialState,
+    initialState: defaultInitialState,
     reducers: {
         setInitialTask(state, action: PayloadAction<TaskProps[]>) {
             state.existingTask = true
             state.fetchedTasks = action.payload
         },
+
         updateTask(state, action: PayloadAction<TaskProps>) {
             const updatedTask = action.payload
             const indexToUpdate = state.fetchedTasks.findIndex(
@@ -42,9 +43,14 @@ const taskSlice = createSlice({
                 (task) => task.id !== taskToDelete.id
             )
         },
+        addTask(state, action: PayloadAction<TaskProps>) {
+            const newTask: TaskProps = action.payload
+            state.fetchedTasks.push(newTask)
+        },
     },
 })
 
-export const { setInitialTask, updateTask, deleteTask } = taskSlice.actions
+export const { setInitialTask, addTask, updateTask, deleteTask } =
+    taskSlice.actions
 
 export default taskSlice.reducer
