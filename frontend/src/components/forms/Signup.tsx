@@ -100,7 +100,7 @@ const SignupForm: React.FC = () => {
                             </FormLabel>
                             <FormControl>
                                 <Input
-                                    className="rounded-[10px] p-3 placeholder:text-gray-200"
+                                    className="rounded-[10px] p-3 placeholder:text-gray-200 border-black border"
                                     placeholder="someUser_offical"
                                     {...field}
                                 />
@@ -124,7 +124,7 @@ const SignupForm: React.FC = () => {
                                 <Input
                                     placeholder="something@email.co"
                                     {...field}
-                                    className="rounded-[10px] p-3 placeholder:text-gray-200"
+                                    className="rounded-[10px] p-3 placeholder:text-gray-200 border-black border"
                                 />
                             </FormControl>
                             <FormDescription className="text-gray-500 text-[12px]">

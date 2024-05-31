@@ -1,5 +1,9 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
-import { checkTokenExpiry } from "@/utils/cookies/cookie"
+import axios, {
+    AxiosError,
+    AxiosResponse,
+    InternalAxiosRequestConfig,
+} from "axios"
+import { getCookie } from "@/utils/cookies/cookie"
 import { serverUrl } from "@/constants/apiServer"
 
 const apiClient = axios.create({
@@ -8,42 +12,58 @@ const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use(
-    async (config: InternalAxiosRequestConfig<any>) => {
-        try {
-            const isTokenExpired = checkTokenExpiry("access_token")
+    (config: InternalAxiosRequestConfig) => {
+        const accessToken = localStorage.getItem("accessToken")
 
-            if (isTokenExpired) {
-                const response = await axios.post(
-                    `${serverUrl}auth/refresh-token`,
-                    {},
-                    {
-                        withCredentials: true,
-                    }
-                )
+        if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`
+        }
 
-                const newAccessToken = response.data.accessToken
-                if (newAccessToken) {
-                    console.log("got new accessToken")
-                }
-                localStorage.setItem(
-                    "access_token",
-                    JSON.stringify(newAccessToken)
-                )
-            }
-
-            const token = localStorage.getItem("access_token")
-
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`
-            }
-        } catch (error) {
-            console.error(`Error refreshing access_token : ${error}`)
+        if (!accessToken) {
+            console.warn("accessToken not found")
         }
 
         return config as InternalAxiosRequestConfig
     },
 
     (error: AxiosError) => {
+        return Promise.reject(error)
+    }
+)
+
+apiClient.interceptors.response.use(
+    (response: AxiosResponse) => response,
+    async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true
+
+            const refreshToken = getCookie("refresh_token")
+
+            if (refreshToken) {
+                try {
+                    const response = await axios.post(
+                        `${serverUrl}/auth/refresh-token`,
+                        {},
+                        {
+                            withCredentials: true,
+                        }
+                    )
+                    const newAccessToken = response.data.accessToken
+
+                    localStorage.setItem("accessToken", newAccessToken)
+
+                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+
+                    return axios(originalRequest)
+                } catch (error) {
+                    console.error(`Error while renewing accessToken ${error}`)
+
+                    localStorage.removeItem("accessToken")
+                }
+            }
+        }
         return Promise.reject(error)
     }
 )

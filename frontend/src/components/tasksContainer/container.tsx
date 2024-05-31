@@ -6,8 +6,8 @@ import { apiClient } from "@/config/axios.config"
 import { useToast } from "@/components/ui/use-toast"
 import { AxiosError } from "axios"
 import { ApiResponse } from "@/types/ApiResponse"
-import { useDispatch, useSelector } from "react-redux"
-import { AppDispatch, RootState } from "@/store/store"
+import { useDispatch } from "react-redux"
+import { AppDispatch } from "@/store/store"
 import { updateTask } from "@/store/taskSlice"
 import { TaskProps } from "@/store/taskSlice"
 
@@ -21,9 +21,6 @@ const TaskContainer: React.FC<ContainerTaskProps> = ({
     const { toast } = useToast()
     const [loading, setLoading] = useState<boolean>(false)
     const dispatch = useDispatch<AppDispatch>()
-    const taskState = useSelector(
-        (state: RootState) => state.tasks.existingTask
-    )
 
     const toggleCompletionStatus = async (id: string) => {
         try {
@@ -34,12 +31,11 @@ const TaskContainer: React.FC<ContainerTaskProps> = ({
                 },
             })
 
-            if (response.status == 200) {
+            if (response.status === 200) {
                 dispatch(updateTask(response.data.updated_task))
             }
         } catch (error) {
             const axiosError = error as AxiosError<ApiResponse>
-
             let message =
                 axiosError.response?.data.message || "Something went wrong"
 
@@ -54,15 +50,17 @@ const TaskContainer: React.FC<ContainerTaskProps> = ({
     }
 
     return (
-        <div className="container grid grid-cols-1 md:grid-cols-2 lg: lg:grid-cols-3">
-            {tasks.map((value, index) => (
-                <div className="card rounded-lg" key={index}>
-                    {loading ? (
-                        <Spinner loading />
-                    ) : !taskState ? (
-                        <p>No tasks created So far</p>
-                    ) : (
-                        <>
+        <>
+            {loading ? (
+                <Spinner loading />
+            ) : tasks.length === 0 ? (
+                <div className="dark:text-gray-500 text-black w-full flex items-center justify-center">
+                    No tasks created so far....
+                </div>
+            ) : (
+                <div className="container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full p-5 border-2 border-white">
+                    {tasks.map((value, index) => (
+                        <div className="card rounded-lg" key={index}>
                             <div className="title">{value.title}</div>
                             <p>{value.description}</p>
                             {value.isEdited && <Badge>edited</Badge>}
@@ -74,7 +72,7 @@ const TaskContainer: React.FC<ContainerTaskProps> = ({
                             <div className="controls">
                                 <button
                                     onClick={() =>
-                                        toggleCompletionStatus(value._id)
+                                        toggleCompletionStatus(value.id)
                                     }
                                     className="dark:bg-white dark:text-black border bg-black text-white"
                                 >
@@ -84,11 +82,11 @@ const TaskContainer: React.FC<ContainerTaskProps> = ({
                                     <Check />
                                 </button>
                             </div>
-                        </>
-                    )}
+                        </div>
+                    ))}
                 </div>
-            ))}
-        </div>
+            )}
+        </>
     )
 }
 

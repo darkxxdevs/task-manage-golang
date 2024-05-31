@@ -53,15 +53,16 @@ const Home: React.FC = () => {
                 >
                     Create new task
                 </Button>
-
-                <Button
-                    variant={"default"}
-                    onClick={() => setTaskFormtoggled(false)}
-                >
-                    <X />
-                </Button>
+                {taskFormToggled && (
+                    <Button
+                        variant={"default"}
+                        onClick={() => setTaskFormtoggled(false)}
+                    >
+                        <X />
+                    </Button>
+                )}
             </div>
-            <div className="show-space w-full p-3">
+            <div className="show-space w-full p-3 lg:p-20">
                 {taskFormToggled ? (
                     <TaskForm />
                 ) : (

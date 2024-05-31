@@ -104,7 +104,7 @@ const LoginForm: React.FC = () => {
                             <FormLabel className="font-bold">Email</FormLabel>
                             <FormControl>
                                 <Input
-                                    className="rounded-[10px] p-3 placeholder:text-gray-200"
+                                    className="rounded-[10px] p-3 placeholder:text-gray-200 border border-black"
                                     placeholder="some@gmai.ci"
                                     {...field}
                                 />
@@ -149,7 +149,7 @@ const LoginForm: React.FC = () => {
                 <div className="submit-btn w-full flex items-center justify-center">
                     <Button
                         type="submit"
-                        className="bg-black text-white font-bold rounded-[10px] hover:bg-[#1e1e2e] w-full"
+                        className="bg-black dark:bg-white  dark:text-black text-white font-bold rounded-[10px] hover:bg-[#1e1e2e] w-full"
                     >
                         Submit
                     </Button>

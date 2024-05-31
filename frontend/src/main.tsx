@@ -10,7 +10,7 @@ import { ThemeProvider } from "./components"
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <Provider store={store}>
                 <div className="continer h-[100vh] mx-auto sm:max-w-full md:max-w-[80%] ">
                     <RouterProvider router={router} />

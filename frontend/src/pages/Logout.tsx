@@ -16,14 +16,12 @@ const Logout: React.FC = () => {
 
                 if (response.status === 200) {
                     dispatch(logout())
-                    localStorage.removeItem("access_token")
+                    localStorage.removeItem("accessToken")
                     localStorage.removeItem("user")
-                    navigate("/auth/login", {
-                        replace: true,
-                    })
+                    navigate("/auth/login")
                 }
-            } catch (error: any) {
-                console.error("Error while logging out user!", error)
+            } catch (error) {
+                console.error(`error while logging out ${error}`)
             }
         })()
     }, [])

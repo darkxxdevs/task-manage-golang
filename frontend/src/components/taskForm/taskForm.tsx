@@ -14,12 +14,13 @@ import {
 import { Input } from "@/components/ui/input"
 import taskvalidationSchema from "@/lib/validation/taskvalidation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import axios, { AxiosError } from "axios"
+import { AxiosError } from "axios"
 import { ApiResponse } from "@/types/ApiResponse"
 import { useToast } from "@/components/ui/use-toast"
 import { useDispatch } from "react-redux"
 import { addTask } from "@/store/taskSlice"
 import { AppDispatch } from "@/store/store"
+import { apiClient } from "@/config/axios.config"
 
 const TaskFrom: React.FC = () => {
     const { toast } = useToast()
@@ -34,8 +35,8 @@ const TaskFrom: React.FC = () => {
 
     const onSubmit = async (values: z.infer<typeof taskvalidationSchema>) => {
         try {
-            const response = await axios.post(
-                "/task",
+            const response = await apiClient.post(
+                "/tasks",
                 {
                     ...values,
                 },
