@@ -2,15 +2,16 @@ package controllers
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/darkxxdevs/task-manager-api-go/models"
 	"github.com/darkxxdevs/task-manager-api-go/services"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"log"
-	"net/http"
-	"strings"
 )
 
 type UserController struct {
@@ -77,7 +78,7 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 
 	newUser := models.User{
 		Username: username,
-		Email:    email,
+		Email:    strings.TrimSpace(strings.ToLower(email)),
 		Password: password,
 	}
 
@@ -132,6 +133,11 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 				"message": "User not found!",
 				"status":  "error",
 			})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Internal server error!",
+				"status":  "error",
+			})
 		}
 		return
 	}
@@ -144,21 +150,22 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.ID, user.Email)
+	accessToken, err := utils.GenerateToken(user.ID, user.Email)
 
 	if err != nil {
 		log.Printf("[Error] while generating accessToken %+v", err.Error())
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken()
+	refreshToken, err := utils.GenerateToken(user.ID, user.Email)
 
 	if err != nil {
 		log.Printf("[Error] while generating refreshToken %+v", err.Error())
 		return
 	}
 
-	ctx.SetCookie("refresh_token", refreshToken, 2592000, "/", "", false, true)
+	ctx.SetCookie("refresh_token", refreshToken, 3600*24*30, "/", "", false, true)
+	ctx.SetCookie("access_token", accessToken, 3600, "/", "localhost", false, true)
 
 	userResponse := UserApiResponse{
 		ID:       user.ID,
@@ -168,16 +175,16 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message":     "Login successful!",
-		"status":      "success",
-		"account":     userResponse,
-		"accessToken": accessToken,
+		"message": "Login successful!",
+		"status":  "success",
+		"account": userResponse,
 	})
 }
 
 func (u *UserController) Logout(ctx *gin.Context) {
 
 	ctx.SetCookie("refresh_token", "", -1, "/", "", false, true)
+	ctx.SetCookie("access_token", "", -1, "/", "", false, true)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Logout successful!",
@@ -391,12 +398,12 @@ func (u *UserController) RenewAccessToken(ctx *gin.Context) {
 
 	}
 
-	ctx.SetCookie("refresh_token", tokens[1], 3600, "/", "localhost", false, true)
+	ctx.SetCookie("refresh_token", tokens[1], 3600*24*30, "/", "localhost", false, true)
+	ctx.SetCookie("access_token", tokens[0], 3600, "/", "localhost", false, true)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message":     "AcessToken refresh successfull!",
-		"status":      "success",
-		"accessToken": tokens[0],
+		"message": "AcessToken refresh successfull!",
+		"status":  "success",
 	})
 
 }

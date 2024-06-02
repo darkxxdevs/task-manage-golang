@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 
 export interface TaskProps {
-    id: string
-    title: string
-    description: string
-    isCompleted: boolean
-    isEdited: boolean
-    userIF: string
+    ID: string
+    Title: string
+    Descrpition: string
+    IsCompleted: boolean
+    IsEdited: boolean
+    UserID: string
 }
 
 interface TaskStateProps {
@@ -31,7 +31,7 @@ const taskSlice = createSlice({
         updateTask(state, action: PayloadAction<TaskProps>) {
             const updatedTask = action.payload
             const indexToUpdate = state.fetchedTasks.findIndex(
-                (task) => updatedTask.id === task.id
+                (task) => updatedTask.ID === task.ID
             )
             if (indexToUpdate !== -1) {
                 state.fetchedTasks[indexToUpdate] = updatedTask
@@ -40,7 +40,7 @@ const taskSlice = createSlice({
         deleteTask(state, action: PayloadAction<TaskProps>) {
             const taskToDelete = action.payload
             state.fetchedTasks = state.fetchedTasks.filter(
-                (task) => task.id !== taskToDelete.id
+                (task) => task.ID !== taskToDelete.ID
             )
         },
         addTask(state, action: PayloadAction<TaskProps>) {

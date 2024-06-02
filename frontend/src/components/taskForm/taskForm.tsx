@@ -18,23 +18,58 @@ import { AxiosError } from "axios"
 import { ApiResponse } from "@/types/ApiResponse"
 import { useToast } from "@/components/ui/use-toast"
 import { useDispatch } from "react-redux"
-import { addTask } from "@/store/taskSlice"
+import { TaskProps, addTask, updateTask } from "@/store/taskSlice"
 import { AppDispatch } from "@/store/store"
 import { apiClient } from "@/config/axios.config"
 
-const TaskFrom: React.FC = () => {
+interface TaskFormProps {
+    task?: TaskProps
+    onFormSubmit: () => void
+}
+
+const TaskFrom: React.FC<TaskFormProps> = ({ onFormSubmit, task }) => {
     const { toast } = useToast()
     const dispatch = useDispatch<AppDispatch>()
     const form = useForm<z.infer<typeof taskvalidationSchema>>({
         resolver: zodResolver(taskvalidationSchema),
         defaultValues: {
-            title: "",
-            description: "",
+            title: task ? task.Title : "",
+            description: task ? task.Descrpition : "",
         },
     })
 
     const onSubmit = async (values: z.infer<typeof taskvalidationSchema>) => {
         try {
+            if (!values.title || !values.description) {
+                toast({
+                    variant: "destructive",
+                    title: "Empty Title or Description",
+                    description: "Both title and description are required!",
+                })
+                return
+            }
+            if (task) {
+                const response = await apiClient.put(
+                    `/tasks?taskId=${task.ID}`,
+                    {
+                        newTitle: values.title,
+                        desc: values.description,
+                    },
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    }
+                )
+
+                if (response.status === 200) {
+                    onFormSubmit()
+                    dispatch(updateTask(response.data.updated_task))
+                }
+
+                return
+            }
+
             const response = await apiClient.post(
                 "/tasks",
                 {
@@ -50,9 +85,9 @@ const TaskFrom: React.FC = () => {
             if (response.status === 200) {
                 const createdTask = response.data.created_task
                 dispatch(addTask(createdTask))
+                onFormSubmit()
             }
         } catch (error) {
-            console.error("error while creating a new task", error)
             const axiosError = error as AxiosError<ApiResponse>
 
             let message =

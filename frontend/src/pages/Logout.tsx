@@ -16,8 +16,7 @@ const Logout: React.FC = () => {
 
                 if (response.status === 200) {
                     dispatch(logout())
-                    localStorage.removeItem("accessToken")
-                    localStorage.removeItem("user")
+                    window.location.reload()
                     navigate("/auth/login")
                 }
             } catch (error) {

@@ -1,8 +1,14 @@
 import React from "react"
 import ServerCrashSvg from "../../assets/server_crash.svg"
 import { Button } from "@/components/ui/button"
+import { ApiResponse } from "@/types/ApiResponse"
+import { AxiosError } from "axios"
 
-const Fallback: React.FC<{ error: Error }> = ({ error }) => {
+interface FallbackProps {
+    error: AxiosError<ApiResponse>
+}
+
+const Fallback: React.FC<FallbackProps> = ({ error }) => {
     const refereshPage = () => {
         window.location.reload()
     }
@@ -15,9 +21,9 @@ const Fallback: React.FC<{ error: Error }> = ({ error }) => {
                     <img className="h-16" src={ServerCrashSvg} alt="" />
                 </span>
             </h1>
-            <h2 className="text-black">We are having issues!</h2>
-            <p>{error?.message}</p>
-            <p>Please Try again later sometime</p>
+            <h2 className="text-black">{error.response?.data.message}</h2>
+            <p>{error?.status}</p>
+            <p>Please try again later</p>
 
             <Button
                 onClick={() => refereshPage()}

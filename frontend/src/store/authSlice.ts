@@ -14,9 +14,8 @@ interface AuthState {
 
 const getInitialState = (): AuthState => {
     const initialUser = localStorage.getItem("user")
-    const initialAccessToken = localStorage.getItem("accessToken")
 
-    if (initialUser && initialAccessToken) {
+    if (initialUser) {
         return {
             isAuthenticated: true,
             user: JSON.parse(initialUser),
@@ -37,10 +36,6 @@ const authSlice = createSlice({
             state.isAuthenticated = true
             state.user = action.payload
             localStorage.setItem(
-                "accessToken",
-                JSON.stringify(action.payload.access_token)
-            )
-            localStorage.setItem(
                 "user",
                 JSON.stringify({
                     username: action.payload.username,
@@ -53,6 +48,7 @@ const authSlice = createSlice({
             state.isAuthenticated = false
             state.user = null
             localStorage.removeItem("vite-ui-theme")
+            localStorage.removeItem("user")
         },
     },
 })

@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"log"
-	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -13,13 +12,11 @@ import (
 type User struct {
 	ID uuid.UUID `gorm:"primary_key;type:uuid"`
 	gorm.Model
-	Username                  string    `json:"username"   gorm:"uniqueIndex;not null"`
-	Password                  string    `json:"password"   gorm:"not null"`
-	Email                     string    `json:"email"      gorm:"unique;not null"`
-	Tasks                     []Task    `json:"tasks"       gorm:"foreignKey:UserID"`
-	Avatar                    string    `json:"avatar,omitempty"`
-	EmailVerificationToken    string    `json:"-"`
-	EmailVerificationTokenExp time.Time `json:"-"`
+	Username string `json:"username"   gorm:"uniqueIndex;not null"`
+	Password string `json:"password"   gorm:"not null"`
+	Email    string `json:"email"      gorm:"unique;not null"`
+	Tasks    []Task `json:"tasks"       gorm:"foreignKey:UserID"`
+	Avatar   string `json:"avatar,omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {

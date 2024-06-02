@@ -86,7 +86,11 @@ func (t *TaskController) CreateTask(ctx *gin.Context) {
 func (t *TaskController) UpdateTask(ctx *gin.Context) {
 	newTitle, newDescrption := ctx.PostForm("newTitle"), ctx.PostForm("desc")
 
-	if strings.Trim(newTitle, "") == "" && strings.Trim(newDescrption, "") == "" {
+	fmt.Println("newTitle", newTitle)
+	fmt.Println("desc", newDescrption)
+
+	if strings.Trim(newTitle, "") == "" || strings.Trim(newDescrption, "") == "" {
+		fmt.Println("empty title or description")
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "Atleast one of new title or description is required!",
 			"state":   "error",
@@ -216,6 +220,7 @@ func (t *TaskController) GetAllTaks(ctx *gin.Context) {
 func (t *TaskController) ToggleCompleteStatus(ctx *gin.Context) {
 
 	params := ctx.Request.URL.Query()
+	fmt.Println(params)
 
 	taskIdSlice, ok := params["taskId"]
 

@@ -1,9 +1,4 @@
-import axios, {
-    AxiosError,
-    AxiosResponse,
-    InternalAxiosRequestConfig,
-} from "axios"
-import { getCookie } from "@/utils/cookies/cookie"
+import axios, { AxiosError, AxiosResponse, AxiosRequestConfig } from "axios"
 import { serverUrl } from "@/constants/apiServer"
 
 const apiClient = axios.create({
@@ -11,57 +6,29 @@ const apiClient = axios.create({
     withCredentials: true,
 })
 
-apiClient.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-        const accessToken = localStorage.getItem("accessToken")
-
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`
-        }
-
-        if (!accessToken) {
-            console.warn("accessToken not found")
-        }
-
-        return config as InternalAxiosRequestConfig
-    },
-
-    (error: AxiosError) => {
-        return Promise.reject(error)
-    }
-)
-
 apiClient.interceptors.response.use(
     (response: AxiosResponse) => response,
     async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        const originalRequest = error.config as AxiosRequestConfig
+        if (
+            error.response &&
+            error.response.status === 401 &&
+            originalRequest._retry !== true
+        ) {
             originalRequest._retry = true
-
-            const refreshToken = getCookie("refresh_token")
-
-            if (refreshToken) {
-                try {
-                    const response = await axios.post(
-                        `${serverUrl}/auth/refresh-token`,
-                        {},
-                        {
-                            withCredentials: true,
-                        }
-                    )
-                    const newAccessToken = response.data.accessToken
-
-                    localStorage.setItem("accessToken", newAccessToken)
-
-                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
-
-                    return axios(originalRequest)
-                } catch (error) {
-                    console.error(`Error while renewing accessToken ${error}`)
-
-                    localStorage.removeItem("accessToken")
+            try {
+                const response = await apiClient.post("/auth/refresh-token")
+                if (response.status !== 200) {
+                    localStorage.removeItem("vite-ui-theme")
+                    localStorage.removeItem("user")
+                    window.location.href = "/auth/login"
                 }
+                return apiClient(originalRequest)
+            } catch (refreshError) {
+                console.error("Error while refreshing token:", refreshError)
+                localStorage.removeItem("vite-ui-theme")
+                localStorage.removeItem("user")
+                window.location.href = "/auth/login"
             }
         }
         return Promise.reject(error)

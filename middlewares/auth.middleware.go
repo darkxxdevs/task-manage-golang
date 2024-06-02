@@ -9,41 +9,55 @@ import (
 	"github.com/darkxxdevs/task-manager-api-go/db"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+		token, source, err := ExtractToken(c)
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "unauthorized request! Authorization header is missing",
+				"message": "Invalid unauthorized request! Token not found",
 				"status":  "error",
+				"err":     err.Error(),
 			})
 			return
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "Unauthorized request! Invalid Authorization header format",
-				"status":  "error",
-			})
-			return
+		var details *utils.CustomClaims
+
+		if source == "header" {
+			details, err = utils.DecodeTokenAuthorization(token)
+
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"message": "Invalid unauthorized request! Token verification failed",
+					"status":  "error",
+					"err":     err.Error(),
+				})
+				return
+			}
+
+			if err := details.Valid(); err != nil {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"message": "Unauthorized request! Token has expired",
+					"status":  "error",
+				})
+				return
+			}
 		}
 
-		token := parts[1]
-
-		details, err := utils.DecodeToken(token)
-
-		fmt.Println("Details:", details)
+		details, err = utils.DecodeTokenAuthorization(token)
 
 		if err != nil {
+
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": "Invalid unauthorized request! Token verification failed",
 				"status":  "error",
 				"err":     err.Error(),
 			})
 			return
+
 		}
 
 		if err := details.Valid(); err != nil {
@@ -55,9 +69,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		cont := controllers.NewUserController(db.DbConnection)
+		user := GetUserById(details.UserId)
 
-		user := cont.GetUserByID(details.UserId)
 		if user == nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": "Invalid unauthorized request! User not found",
@@ -71,5 +84,34 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 
 	}
+}
 
+func ExtractToken(c *gin.Context) (string, string, error) {
+	authHeader := c.GetHeader("Authorization")
+
+	if authHeader != "" {
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			return "", "", fmt.Errorf("invalid Authorization header format")
+		}
+
+		return parts[1], "header", nil
+
+	}
+
+	accessTokenString, err := c.Cookie("access_token")
+
+	if err != nil {
+		return "", "", fmt.Errorf("no access token found")
+	}
+
+	return accessTokenString, "cookie", nil
+}
+
+func GetUserById(userId uuid.UUID) *controllers.UserApiResponse {
+
+	cont := controllers.NewUserController(db.DbConnection)
+
+	return cont.GetUserByID(userId)
 }

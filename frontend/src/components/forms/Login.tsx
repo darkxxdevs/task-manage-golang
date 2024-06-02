@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
+import { ApiResponse } from "@/types/ApiResponse.ts"
 import Fallback from "../Fallback/FallBack.tsx"
 import { useForm } from "react-hook-form"
 import { loginDataSchema } from "@/lib/validation"
@@ -60,17 +61,17 @@ const LoginForm: React.FC = () => {
                 dispatch(
                     login({
                         ...data,
-                        access_token: response.data.accessToken,
                     })
                 )
                 navigator("/", { replace: true })
             }
         } catch (err) {
-            console.error(`Error while signing up ${err}`)
+            const axiosError = err as AxiosError<ApiResponse>
+            console.error(`Error while  login : ${err}`)
             dispatch(
                 initalize({
                     status: true,
-                    error: err as Error,
+                    error: axiosError || "Something went wrong",
                 })
             )
         } finally {
@@ -79,7 +80,7 @@ const LoginForm: React.FC = () => {
     }
 
     if (failure.status) {
-        return <Fallback error={failure.error as Error} />
+        return <Fallback error={failure.error as AxiosError<ApiResponse>} />
     }
 
     if (isSubmitting) {

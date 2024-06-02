@@ -44,7 +44,7 @@ func (c *CustomClaims) GetAudience() (jwt.ClaimStrings, error) {
 	return jwt.ClaimStrings{c.Audience}, nil
 }
 
-func GenerateAccessToken(userID uuid.UUID, email string) (string, error) {
+func GenerateToken(userID uuid.UUID, email string) (string, error) {
 	now := time.Now()
 	claims := CustomClaims{
 		UserId: userID,
@@ -65,22 +65,7 @@ func GenerateAccessToken(userID uuid.UUID, email string) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
-func GenerateRefreshToken() (string, error) {
-	claims := StandardClaims{
-		Subject:   uuid.New().String(),
-		ExpiresAt: time.Now().Add(time.Hour * 24 * 30).Unix(),
-		IssuedAt:  time.Now().Unix(),
-		NotBefore: time.Now().Unix(),
-		Issuer:    "oragnico",
-		Audience:  "general",
-		ID:        uuid.New().String(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
-}
-
-func DecodeToken(token string) (*CustomClaims, error) {
+func DecodeTokenAuthorization(token string) (*CustomClaims, error) {
 	claims := &CustomClaims{}
 
 	parts := strings.Split(token, ".")
@@ -100,6 +85,24 @@ func DecodeToken(token string) (*CustomClaims, error) {
 	return claims, nil
 }
 
+func DecodeToken(tokenString string) (*CustomClaims, error) {
+	claims := &CustomClaims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(jwtSecret), nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error decoding token: %v", err)
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("token is not valid")
+	}
+
+	return claims, nil
+}
+
 func decodeBase64(input string) ([]byte, error) {
 	return base64.RawURLEncoding.DecodeString(input)
 }
@@ -111,12 +114,12 @@ func RefreshAccessToken(refreshToken string) ([]string, error) {
 		return nil, err
 	}
 
-	newAccessToken, err := GenerateAccessToken(claims.UserId, claims.Email)
+	newAccessToken, err := GenerateToken(claims.UserId, claims.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	newRefreshToken, err := GenerateRefreshToken()
+	newRefreshToken, err := GenerateToken(claims.UserId, claims.Email)
 
 	if err != nil {
 		return nil, err
