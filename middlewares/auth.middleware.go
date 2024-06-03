@@ -2,14 +2,13 @@ package middlewares
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
-
 	"github.com/darkxxdevs/task-manager-api-go/controllers"
 	"github.com/darkxxdevs/task-manager-api-go/db"
 	"github.com/darkxxdevs/task-manager-api-go/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"net/http"
+	"strings"
 )
 
 func AuthMiddleware() gin.HandlerFunc {

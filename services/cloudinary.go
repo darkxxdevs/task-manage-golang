@@ -2,12 +2,11 @@ package services
 
 import (
 	"context"
-	"log"
-	"os"
-	"time"
-
+	"fmt"
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"os"
+	"time"
 )
 
 func newCloud() (*cloudinary.Cloudinary, error) {
@@ -17,7 +16,7 @@ func newCloud() (*cloudinary.Cloudinary, error) {
 		os.Getenv("CLOUDINARY_API_SECRET"))
 }
 
-func UploadImage(localpath string) (string, error) {
+func UploadImage(localpath string) ([]string, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
@@ -25,7 +24,7 @@ func UploadImage(localpath string) (string, error) {
 
 	cld, err := newCloud()
 	if err != nil {
-		log.Fatal("[Error] creating cloudinary client:", err)
+		return nil, fmt.Errorf("[Error] creating cloudinary client: %w", err)
 	}
 
 	response, err := cld.Upload.Upload(ctx, localpath, uploader.UploadParams{
@@ -33,8 +32,31 @@ func UploadImage(localpath string) (string, error) {
 	})
 
 	if err != nil {
-		log.Fatal("[Error] while uploading assets..", err)
+		return nil, fmt.Errorf("[Error] while uploading image: %w", err)
 	}
 
-	return response.URL, nil
+	return []string{response.URL, response.PublicID}, nil
+}
+
+func DeleteImage(publicID string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	defer cancel()
+
+	cld, err := newCloud()
+
+	if err != nil {
+		return false, fmt.Errorf("[Error] creating cloudinary client: %w", err)
+	}
+
+	response, _ := cld.Upload.Destroy(ctx, uploader.DestroyParams{
+		PublicID:     publicID,
+		ResourceType: "image",
+	})
+
+	if len(response.Error.Message) > 0 {
+		return false, fmt.Errorf("%s", response.Error.Message)
+	}
+
+	return true, nil
 }

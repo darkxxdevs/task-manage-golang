@@ -4,7 +4,7 @@ import axios, { AxiosError } from "axios"
 import { ApiResponse } from "@/types/ApiResponse.ts"
 import Fallback from "../Fallback/FallBack.tsx"
 import { useForm } from "react-hook-form"
-import { loginDataSchema } from "@/lib/validation"
+import { loginDataSchema } from "@/lib/validation/login.ts"
 import { z } from "zod"
 import { Button } from "../ui/button"
 import { Link, useNavigate } from "react-router-dom"
@@ -105,7 +105,7 @@ const LoginForm: React.FC = () => {
                             <FormLabel className="font-bold">Email</FormLabel>
                             <FormControl>
                                 <Input
-                                    className="rounded-[10px] p-3 placeholder:text-gray-200 border border-black"
+                                    className="rounded-[10px] p-3 placeholder:text-gray-200 border border-black "
                                     placeholder="some@gmai.ci"
                                     {...field}
                                 />

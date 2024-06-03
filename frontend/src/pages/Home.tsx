@@ -36,7 +36,7 @@ const Home: React.FC = () => {
             }
         } catch (error) {
             const axiosError = error as AxiosError<ApiResponse>
-            let message = axiosError.response?.data.error
+            const message = axiosError.response?.data.error
             toast({
                 variant: "destructive",
                 title: "Aww Snap :(",

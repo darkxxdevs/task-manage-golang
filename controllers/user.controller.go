@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -19,10 +18,11 @@ type UserController struct {
 }
 
 type UserApiResponse struct {
-	ID       uuid.UUID `json:"_id"`
-	Useranme string    `json:"username"`
-	Email    string    `json:"email"`
-	Avatar   string    `json:"avatar"`
+	ID             uuid.UUID `json:"_id"`
+	Useranme       string    `json:"username"`
+	Email          string    `json:"email"`
+	Avatar         string    `json:"avatar"`
+	AvatarPublicID string    `json:"avatar_public_id"`
 }
 
 func NewUserController(DBconnection *gorm.DB) *UserController {
@@ -70,20 +70,26 @@ func (u *UserController) RegisterUser(ctx *gin.Context) {
 		return
 	}
 
-	avatarUrl, err := services.UploadImage(localFilePathString)
+	uploadedAssetCredentails, err := services.UploadImage(localFilePathString)
 
 	if err != nil {
-		fmt.Println("error while uploading image to cloudinary!", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while uploading image",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
 	}
 
 	newUser := models.User{
-		Username: username,
-		Email:    strings.TrimSpace(strings.ToLower(email)),
-		Password: password,
+		Username:       username,
+		Email:          strings.TrimSpace(strings.ToLower(email)),
+		Password:       password,
+		AvatarPublicID: uploadedAssetCredentails[1],
 	}
 
-	if len(avatarUrl) > 0 {
-		newUser.Avatar = avatarUrl
+	if len(uploadedAssetCredentails) > 0 {
+		newUser.Avatar = uploadedAssetCredentails[0]
 	}
 
 	result = u.DB.Create(&newUser)
@@ -153,14 +159,22 @@ func (u *UserController) LoginUser(ctx *gin.Context) {
 	accessToken, err := utils.GenerateToken(user.ID, user.Email)
 
 	if err != nil {
-		log.Printf("[Error] while generating accessToken %+v", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while generating accessToken",
+			"error":   err.Error(),
+			"status":  "error",
+		})
 		return
 	}
 
 	refreshToken, err := utils.GenerateToken(user.ID, user.Email)
 
 	if err != nil {
-		log.Printf("[Error] while generating refreshToken %+v", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while generating refreshToken",
+			"error":   err.Error(),
+			"status":  "error",
+		})
 		return
 	}
 
@@ -206,10 +220,11 @@ func (u *UserController) GetUserByID(userID uuid.UUID) *UserApiResponse {
 	}
 
 	userResponse := UserApiResponse{
-		ID:       user.ID,
-		Useranme: user.Username,
-		Email:    user.Email,
-		Avatar:   user.Avatar,
+		ID:             user.ID,
+		Useranme:       user.Username,
+		Email:          user.Email,
+		Avatar:         user.Avatar,
+		AvatarPublicID: user.AvatarPublicID,
 	}
 
 	return &userResponse
@@ -233,11 +248,25 @@ func (u *UserController) GetCurrentUser(ctx *gin.Context) {
 		})
 	}
 
+	var ExistingUserInDB models.User
+
+	result := u.DB.Where("id=?", userConv.ID).First(&ExistingUserInDB)
+
+	if err := result.Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"message": "User not found!",
+				"status":  "error",
+			})
+		}
+		return
+	}
+
 	apiReponse := UserApiResponse{
-		ID:       userConv.ID,
-		Useranme: userConv.Useranme,
-		Email:    userConv.Email,
-		Avatar:   userConv.Avatar,
+		ID:       ExistingUserInDB.ID,
+		Useranme: ExistingUserInDB.Username,
+		Email:    ExistingUserInDB.Email,
+		Avatar:   ExistingUserInDB.Avatar,
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -246,6 +275,86 @@ func (u *UserController) GetCurrentUser(ctx *gin.Context) {
 		"current_user": apiReponse,
 	})
 
+}
+
+func (u *UserController) UpdateUserAvatar(ctx *gin.Context) {
+	localFilePath, exists := ctx.Get("localFilePath")
+
+	if !exists {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error":  "avatar not found!",
+			"status": "error",
+		})
+		return
+	}
+
+	localFilePathString, ok := localFilePath.(string)
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":  "invalid type for localFilePath!",
+			"status": "error",
+		})
+		return
+	}
+
+	user, ok := ctx.Get("user")
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Unauthorized request ! user not found in the current context",
+			"status":  "error",
+		})
+	}
+
+	userConv, ok := user.(*UserApiResponse)
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error parsing user",
+			"status":  "error",
+		})
+		return
+	}
+
+	uploadImageParams, err := services.UploadImage(localFilePathString)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while uploading image",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	_, err = services.DeleteImage(userConv.AvatarPublicID)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error while deleting image",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+	updates := models.User{
+		Avatar:         uploadImageParams[0],
+		AvatarPublicID: uploadImageParams[1],
+	}
+
+	if err := u.DB.Model(&models.User{}).Where("id = ?", userConv.ID).Updates(updates).Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to update user avatar!",
+			"error":   err.Error(),
+			"status":  "error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Avatar updated successfully!",
+		"status":  "success",
+	})
 }
 
 func (u *UserController) UpdateUserDetails(ctx *gin.Context) {
@@ -298,17 +407,9 @@ func (u *UserController) UpdateUserDetails(ctx *gin.Context) {
 		return
 	}
 
-	apiResponse := UserApiResponse{
-		ID:       userConv.ID,
-		Useranme: updatedUser.Username,
-		Email:    updatedUser.Email,
-		Avatar:   userConv.Avatar,
-	}
-
 	ctx.JSON(http.StatusOK, gin.H{
-		"message":      "details updated successfully",
-		"status":       "success",
-		"updated user": apiResponse,
+		"message": "details updated successfully",
+		"status":  "success",
 	})
 
 }

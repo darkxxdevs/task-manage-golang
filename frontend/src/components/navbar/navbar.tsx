@@ -1,4 +1,5 @@
 import React from "react"
+import { Link } from "react-router-dom"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,7 +18,7 @@ interface NavUserProps {
     email?: string
 }
 
-const NavBar: React.FC<NavUserProps> = (user) => {
+const NavBar: React.FC<NavUserProps> = user => {
     const navigator = useNavigate()
 
     return (
@@ -42,7 +43,9 @@ const NavBar: React.FC<NavUserProps> = (user) => {
                             </DropdownMenuLabel>
                             <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
+                            <Link to="/u/profile">
+                                <DropdownMenuItem>profile</DropdownMenuItem>
+                            </Link>
                             <DropdownMenuItem
                                 onClick={() => navigator("/auth/logout")}
                                 className="text-red-500"

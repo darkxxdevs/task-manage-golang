@@ -12,11 +12,12 @@ import (
 type User struct {
 	ID uuid.UUID `gorm:"primary_key;type:uuid"`
 	gorm.Model
-	Username string `json:"username"   gorm:"uniqueIndex;not null"`
-	Password string `json:"password"   gorm:"not null"`
-	Email    string `json:"email"      gorm:"unique;not null"`
-	Tasks    []Task `json:"tasks"       gorm:"foreignKey:UserID"`
-	Avatar   string `json:"avatar,omitempty"`
+	Username       string `json:"username"   gorm:"uniqueIndex;not null"`
+	Password       string `json:"password"   gorm:"not null"`
+	Email          string `json:"email"      gorm:"unique;not null"`
+	Tasks          []Task `json:"tasks"       gorm:"foreignKey:UserID"`
+	Avatar         string `json:"avatar,omitempty"`
+	AvatarPublicID string `json:"-"  gorm:"avatar_public_id"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {

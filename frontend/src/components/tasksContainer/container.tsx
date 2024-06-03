@@ -46,7 +46,7 @@ const TaskContainer: React.FC<ContainerTaskProps> = ({
         } catch (error) {
             const axiosError = error as AxiosError<ApiResponse>
             console.log(axiosError.response?.data)
-            let message =
+            const message =
                 axiosError.response?.data.message || "Something went wrong"
             toast({
                 variant: "destructive",
@@ -71,9 +71,9 @@ const TaskContainer: React.FC<ContainerTaskProps> = ({
                     {tasks.map((value, index) => (
                         <Card className="p-4" key={index}>
                             <CardHeader>
-                                <CardTitle className="text-sm  font-bold dark:text-white text-black mb-2 flex items-center gap-2 justify-between">
+                                <CardTitle className="text-sm  font-bold dark:text-white text-black mb-2 flex  flex-wrap items-center gap-2 justify-between">
                                     <span>{value.Title}</span>
-                                    <div className="badges flex flex-row items-center gap-1">
+                                    <div className="badges flex md:flex-row flex-wrap items-center gap-1">
                                         {value.IsEdited && (
                                             <Badge
                                                 className=" text-sm "

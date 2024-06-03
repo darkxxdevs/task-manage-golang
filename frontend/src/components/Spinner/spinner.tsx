@@ -12,7 +12,7 @@ const Spinner: React.FC<LoaderProps> = ({ loading, styles }) => {
     return (
         <div className="container py-8 px-8">
             <ClimbingBoxLoader
-                color={theme.theme === "dark" ? "#000000" : "#dddddd"}
+                color={theme.theme !== "dark" ? "#000000" : "#dddddd"}
                 loading={loading}
                 cssOverride={styles}
             />

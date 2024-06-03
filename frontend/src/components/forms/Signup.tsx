@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate } from "react-router-dom"
-import { SingnUpDataSchema } from "@/lib/validation"
+import { SingnUpDataSchema } from "@/lib/validation/signup.ts"
 import Fallback from "../Fallback/FallBack.tsx"
 import { z } from "zod"
 import { Button } from "../ui/button"
@@ -18,10 +18,11 @@ import {
 import { Input } from "../ui/input"
 import { PasswordInput } from ".."
 import Spinner from "../Spinner/spinner.tsx"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import { serverUrl } from "@/constants/apiServer.ts"
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/store/store.ts"
+import { ApiResponse } from "@/types/ApiResponse.ts"
 import { initalize } from "@/store/failureSlice.ts"
 
 const SignupForm: React.FC = () => {
@@ -77,7 +78,7 @@ const SignupForm: React.FC = () => {
     }
 
     if (failureStatus) {
-        return <Fallback error={failureError as Error} />
+        return <Fallback error={failureError as AxiosError<ApiResponse>} />
     }
 
     return isSubmitting ? (

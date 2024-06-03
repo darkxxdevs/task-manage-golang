@@ -90,7 +90,7 @@ const TaskFrom: React.FC<TaskFormProps> = ({ onFormSubmit, task }) => {
         } catch (error) {
             const axiosError = error as AxiosError<ApiResponse>
 
-            let message =
+            const message =
                 axiosError.response?.data.error || "Something went wrong"
 
             toast({

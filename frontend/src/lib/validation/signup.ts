@@ -1,14 +1,13 @@
 import { z } from "zod"
 import { imageValidationSchema } from "./image"
 
-const usernameValidation = z
+export const usernameValidation = z
     .string()
     .min(3, { message: "Username must be at least 3 characters long" })
     .max(20, { message: "Username must be at most 20 characters long" })
     .regex(/^[a-zA-Z0-9_]+$/, {
         message: "invalid username",
     })
-
 
 export const SingnUpDataSchema = z.object({
     name: usernameValidation,
